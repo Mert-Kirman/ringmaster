@@ -37,18 +37,40 @@ int main() {
     struct Person **people;
     people = (struct Person **)malloc(peopleMaxCount * sizeof(struct Person *));  // At the beginning, create an array of person structs with only 1 person struct
 
-    // Add a person for test purposes
-    struct Person person;
-    person.name = "Mert";
-    person.location = "boun";
-    struct Person *tmp = &person;
-    addPerson(&peopleCount, &people, tmp, &peopleMaxCount);
+    // Add dummies for test purposes
+    struct Person *person1 = (struct Person *)malloc(sizeof(struct Person));
+    person1->name = "Mert";
+    person1->location = "boun";
+    addPerson(&peopleCount, &people, person1, &peopleMaxCount);
+
+    struct Person *person2 = (struct Person *)malloc(sizeof(struct Person));
+    person2->name = "Arda";
+    person2->location = "boun";
+    addPerson(&peopleCount, &people, person2, &peopleMaxCount);
+
+    struct Person *person3 = (struct Person *)malloc(sizeof(struct Person));
+    person3->name = "Umut";
+    person3->location = "boun";
+    addPerson(&peopleCount, &people, person3, &peopleMaxCount);
+
+    struct Person *person4 = (struct Person *)malloc(sizeof(struct Person));
+    person4->name = "Ahmet";
+    person4->location = "boun";
+    addPerson(&peopleCount, &people, person4, &peopleMaxCount);
+
+    struct Person *person5 = (struct Person *)malloc(sizeof(struct Person));
+    person5->name = "Tolga";
+    person5->location = "boun";
+    addPerson(&peopleCount, &people, person5, &peopleMaxCount);
 
     while (1) {
         printf(">> ");
         fflush(stdout);
 
         if (fgets(line, 1025, stdin) == NULL) {
+            break;
+        }
+        if (strcmp(line, "exit\n") == 0) {
             break;
         }
 
@@ -61,17 +83,25 @@ int main() {
             addElement(&wordCount, &words, t, &wordsMaxSize);
         }
 
-        if (strcmp(line, "exit\n") == 0) {
-            break;
-        }
-
         // Check whether first word is "who"
         if(strcmp(words[0], "who") == 0) {
+            // Check if the question format is correct
+            if (wordCount != 4){
+                printf("INVALID\n");
+                continue;
+            }
+
             if(strcmp(words[1], "at") != 0) {
                 printf("INVALID\n");
                 continue;
             }
 
+            if(strcmp(words[3], "?") != 0) {
+                printf("INVALID\n");
+                continue;
+            }
+
+            // Check if location name is valid
             char *locationName = words[2];
             if(isKeyword(locationName) == true || isForbiddenWord(locationName) == true) {
                 printf("INVALID\n");
@@ -79,22 +109,36 @@ int main() {
                 continue;
             }
 
-            // Location is valid
             int locationFound = false;
+
+            // Keep track of the people at this location
+            int atLocationCount = 0;
+            int atLocationMaxSize = 1;
+            char **atLocation = (char **)malloc(atLocationMaxSize * sizeof(char *));
 
             // Check if anyone is at this location
             for(int i = 0; i < peopleCount; i++) {
-                if(strcmp(((*people)[i]).location, locationName) == 0) {  // If someone is at this location, print the name of the person
+                if(strcmp(people[i]->location, locationName) == 0) {  // If someone is at this location, store them
                     locationFound = true;
-                    printf("%s\n", ((*people)[i]).name);
-                    break;
+                    addElement(&atLocationCount,&atLocation,people[i]->name,&atLocationMaxSize);
                 }
             }
 
             if(locationFound == false) {
                 printf("NOBODY\n");
+                free(atLocation);
+                free(words);
+                continue;
             }
 
+            // Print people at this location
+            for (int i = 0; i < atLocationCount - 1; i++) {
+                printf("%s and ", atLocation[i]);
+            }
+            printf("%s\n", atLocation[atLocationCount - 1]);
+
+
+            free(atLocation);
             free(words);
             continue;
         }
