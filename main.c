@@ -20,8 +20,8 @@ struct Person {
     struct Item root;
 };
 
-char forbiddenWords[3][7] = { "NOBODY", "NOTHING", "NOWHERE"};  // These words cannot be used inside a sentence
-char keywords[16][5] = {"sell", "buy", "go", "to", "from", "and", "at", "has", "if",
+char forbiddenWords[3][8] = { "NOBODY", "NOTHING", "NOWHERE"};  // These words cannot be used inside a sentence
+char keywords[16][6] = {"sell", "buy", "go", "to", "from", "and", "at", "has", "if",
                         "less", "more", "than", "exit", "where", "total", "who"};  // Used for parsing
 
 // Check if a given entity name is valid
@@ -36,6 +36,9 @@ int isForbiddenWord(char *word);
 
 int main() {
     struct Person head;
+    struct Person tail;
+    head.name = "";
+    tail = head;
 
     char line[1025];
 
@@ -61,7 +64,7 @@ int main() {
             wordCount++;
         }
         for (int i = 0; i < wordCount; ++i) {
-            printf("%s\n",words[i]);
+            //printf("%s\n",words[i]);
 
         }
 
@@ -69,7 +72,8 @@ int main() {
         dummy.name = "DUMMY";
         dummy.location = "BOUN";
 
-        head.next = &dummy;
+        tail.next = &dummy;
+        tail = dummy;
 
         // Check whether first word is "who"
         if(strcmp(words[0], "who") == 0) {
@@ -148,6 +152,3 @@ int isForbiddenWord(char *word) {
 
     return false;
 }
-
-
-
