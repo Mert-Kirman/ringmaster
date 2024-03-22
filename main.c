@@ -17,6 +17,7 @@ struct Person {
     char *location;
     struct Person *previous;
     struct Person *next;
+    struct Item root;
 };
 
 char forbiddenWords[3][7] = { "NOBODY", "NOTHING", "NOWHERE"};  // These words cannot be used inside a sentence
@@ -32,16 +33,9 @@ int isKeyword(char *word);
 // Check if a word is forbidden
 int isForbiddenWord(char *word);
 
-// Add a new person
-void addToPersonList(struct Person *tail, struct Person *newPerson);
-
-// Add a new item
-void addToItemList(struct Item *tail, struct Item *newItem);
 
 int main() {
-    struct Person *head = NULL;
-    struct Person *tail = NULL;
-    (*head).next = tail;
+    struct Person head;
 
     char line[1025];
 
@@ -66,12 +60,16 @@ int main() {
             words[wordCount] = t;
             wordCount++;
         }
+        for (int i = 0; i < wordCount; ++i) {
+            printf("%s\n",words[i]);
 
-        struct Person *dummy = NULL;
-        (*dummy).name = "DUMMY";
-        (*dummy).location = "BOUN";
+        }
 
-        addToPersonList(tail, dummy);
+        struct Person dummy;
+        dummy.name = "DUMMY";
+        dummy.location = "BOUN";
+
+        head.next = &dummy;
 
         // Check whether first word is "who"
         if(strcmp(words[0], "who") == 0) {
@@ -81,7 +79,7 @@ int main() {
             }
 
             char *locationName = words[2];
-            if(isKeyword(locationName) == 0 || isForbiddenWord(locationName) == 0) {
+            if(isKeyword(locationName) == 1 || isForbiddenWord(locationName) == 1) {
                 printf("INVALID\n");
                 continue;
             }
@@ -89,14 +87,20 @@ int main() {
             // Location is valid
             int locationFound = false;
 
-            struct Person *tmp = (*head).next;
-            while((*tmp).next != tail) {
-                if(strcmp((*tmp).location, locationName) == 0) {
+            struct Person tmp = *head.next;
+            while(tmp.next != NULL) {
+                if(strcmp(tmp.location, locationName) == 0) {
                     locationFound = true;
-                    printf("%s\n", (*tmp).name);
+                    printf("%s\n", tmp.name);
                     break;
                 }
+                tmp = *tmp.next;
             }
+            if(strcmp(tmp.location, locationName) == 0) {
+                locationFound = true;
+                printf("%s\n", tmp.name);
+            }
+
 
             if(locationFound == false) {
                 printf("NOBODY\n");
@@ -145,16 +149,5 @@ int isForbiddenWord(char *word) {
     return false;
 }
 
-void addToPersonList(struct Person *tail, struct Person *newPerson) {
-    (*newPerson).next = tail;
-    (*(*tail).previous).next = newPerson;
-    (*newPerson).previous = (*tail).previous;
-    (*tail).previous = newPerson;
-}
 
-void addToItemList(struct Item *tail, struct Item *newItem) {
-    (*newItem).next = tail;
-    (*(*tail).previous).next = newItem;
-    (*newItem).previous = (*tail).previous;
-    (*tail).previous = newItem;
-}
+
