@@ -5,22 +5,29 @@
 #define true 1
 #define false 0
 
+// These words cannot be used inside a sentence
+char forbiddenWords[3][8] = { "NOBODY", "NOTHING", "NOWHERE"};
+// Used for parsing
+char keywords[16][6] = {"sell", "buy", "go", "to", "from", "and", "at", "has", "if",
+                        "less", "more", "than", "exit", "where", "total", "who"};
+
 struct Person {
     char *name;
     char *location;
-//    char **itemNames;  // 2D Array to keep item names
-//    int *itemNumbers;
+    char **itemNames;  // 2D Array to keep item names
+    int *itemNumbers;  // 1D Array to keep item counts
+    int itemCount;
+    int itemMaxCount;
 };
-
-char forbiddenWords[3][8] = { "NOBODY", "NOTHING", "NOWHERE"};  // These words cannot be used inside a sentence
-char keywords[16][6] = {"sell", "buy", "go", "to", "from", "and", "at", "has", "if",
-                        "less", "more", "than", "exit", "where", "total", "who"};  // Used for parsing
 
 // Add a word to an array
 void addElement(int *wordCount, char ***words, char *word, int *wordsMaxSize);
 
 // Add a new person to people array
 void addPerson(int *peopleCount, struct Person ***people, struct Person *newPerson, int *peopleMaxCount);
+
+// Add a new or existing item to a person's item list
+void addItem(int *itemCount, char ***itemNames, char *newItem, int * itemMaxCount, int **itemNumbers);
 
 // Check if a word is a keyword
 int isKeyword(char *word);
@@ -32,36 +39,84 @@ int main() {
 
     char line[1025];
 
+    // Create an array of person structs with max capacity of 1
     int peopleCount = 0;
     int peopleMaxCount = 1;
     struct Person **people;
-    people = (struct Person **)malloc(peopleMaxCount * sizeof(struct Person *));  // At the beginning, create an array of person structs with only 1 person struct
+    people = (struct Person **)malloc(peopleMaxCount * sizeof(struct Person *));
 
-    // Add dummies for test purposes
+    /* Add dummies for test purposes */
+    // Create a person instance
     struct Person *person1 = (struct Person *)malloc(sizeof(struct Person));
+    // Default values for every person instance
+    person1->itemCount = 0;
+    person1->itemMaxCount = 1;
+    person1->itemNames = (char **)malloc((person1->itemMaxCount) * sizeof(char *));
+    person1->itemNumbers = (int *)malloc((person1->itemMaxCount) * sizeof(int));
+    // Custom values
     person1->name = "Mert";
     person1->location = "boun";
+    // Add person instance to the people array
     addPerson(&peopleCount, &people, person1, &peopleMaxCount);
 
+    printf("%s number is: %d\n", (person1->itemNames)[0], (person1->itemNumbers)[0]);
+
+    // Add a dummy item for person1
+    char *newItem = "elma";
+    addItem(&(person1->itemCount), &(person1->itemNames), newItem, &(person1->itemMaxCount), &(person1->itemNumbers));
+
+    printf("%s number is: %d\n", (person1->itemNames)[0], (person1->itemNumbers)[0]);
+
+    // Add the same dummy item for person1 again
+    newItem = "elma";
+    addItem(&(person1->itemCount), &(person1->itemNames), newItem, &(person1->itemMaxCount), &(person1->itemNumbers));
+
+    printf("%s number is: %d\n", (person1->itemNames)[0], (person1->itemNumbers)[0]);
+
+    // Add a different dummy item for person1
+    newItem = "armut";
+    addItem(&(person1->itemCount), &(person1->itemNames), newItem, &(person1->itemMaxCount), &(person1->itemNumbers));
+
+    printf("%s number is: %d\n", (person1->itemNames)[0], (person1->itemNumbers)[0]);
+    printf("%s number is: %d\n", (person1->itemNames)[1], (person1->itemNumbers)[1]);
+
+    printf("\nMOVING ON TO SECOND DUMMY PERSON\n\n");
+
+    // Create a second person instance
     struct Person *person2 = (struct Person *)malloc(sizeof(struct Person));
+    // Default values for every person instance
+    person2->itemCount = 0;
+    person2->itemMaxCount = 1;
+    person2->itemNames = (char **)malloc((person2->itemMaxCount) * sizeof(char *));
+    person2->itemNumbers = (int *)malloc((person2->itemMaxCount) * sizeof(int));
+    // Custom values
     person2->name = "Arda";
     person2->location = "boun";
+    // Add person instance to the people array
     addPerson(&peopleCount, &people, person2, &peopleMaxCount);
 
-    struct Person *person3 = (struct Person *)malloc(sizeof(struct Person));
-    person3->name = "Umut";
-    person3->location = "boun";
-    addPerson(&peopleCount, &people, person3, &peopleMaxCount);
+    printf("%s number is: %d\n", (person2->itemNames)[0], (person2->itemNumbers)[0]);
 
-    struct Person *person4 = (struct Person *)malloc(sizeof(struct Person));
-    person4->name = "Ahmet";
-    person4->location = "boun";
-    addPerson(&peopleCount, &people, person4, &peopleMaxCount);
+    // Add a dummy item for person1
+    newItem = "muz";
+    addItem(&(person2->itemCount), &(person2->itemNames), newItem, &(person2->itemMaxCount), &(person2->itemNumbers));
 
-    struct Person *person5 = (struct Person *)malloc(sizeof(struct Person));
-    person5->name = "Tolga";
-    person5->location = "boun";
-    addPerson(&peopleCount, &people, person5, &peopleMaxCount);
+    printf("%s number is: %d\n", (person2->itemNames)[0], (person2->itemNumbers)[0]);
+
+    // Add the same dummy item for person2 again
+    newItem = "muz";
+    addItem(&(person2->itemCount), &(person2->itemNames), newItem, &(person2->itemMaxCount), &(person2->itemNumbers));
+
+    printf("%s number is: %d\n", (person2->itemNames)[0], (person2->itemNumbers)[0]);
+
+    // Add a different dummy item for person1
+    newItem = "cilek";
+    addItem(&(person2->itemCount), &(person2->itemNames), newItem, &(person2->itemMaxCount), &(person2->itemNumbers));
+
+    printf("%s number is: %d\n", (person2->itemNames)[0], (person2->itemNumbers)[0]);
+    printf("%s number is: %d\n", (person2->itemNames)[1], (person2->itemNumbers)[1]);
+    printf("\n\n");
+    /* END OF DUMMY TEST */
 
     while (1) {
         printf(">> ");
@@ -166,6 +221,29 @@ void addPerson(int *peopleCount, struct Person ***people, struct Person *newPers
     if(*peopleCount == *peopleMaxCount) {
         *peopleMaxCount *= 2;
         *people = (struct Person **)realloc(*people, (*peopleMaxCount) * sizeof(struct Person *));
+    }
+}
+
+void addItem(int *itemCount, char ***itemNames, char *newItem, int *itemMaxCount, int **itemNumbers) {
+    // Check if the item to be added already exists
+    for(int i = 0; i < (*itemCount); i++) {
+        if(strcmp((*itemNames)[i], newItem) == 0) {  // Item already exists, increment its number
+            (*itemNumbers)[i]++;
+            return;
+        }
+    }
+
+    // This is a new item
+    (*itemNames)[*itemCount] = (char *)malloc(sizeof(*newItem));
+    strcpy((*itemNames)[*itemCount], newItem);
+    (*itemNumbers)[*itemCount] = 1;
+    (*itemCount)++;
+
+    // If array is full, double its size
+    if(*itemCount == *itemMaxCount) {
+        *itemMaxCount *= 2;
+        *itemNames = (char **)realloc(*itemNames, (*itemMaxCount) * sizeof(char *));
+        *itemNumbers = (int *)realloc(*itemNumbers, (*itemMaxCount) * sizeof(int));
     }
 }
 
