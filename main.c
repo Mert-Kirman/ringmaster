@@ -54,7 +54,7 @@ int main() {
     person1->itemNames = (char **)malloc((person1->itemMaxCount) * sizeof(char *));
     person1->itemNumbers = (int *)malloc((person1->itemMaxCount) * sizeof(int));
     // Custom values
-    person1->name = "Mert";
+    person1->name = "mert";
     person1->location = "boun";
     // Add person instance to the people array
     addPerson(&peopleCount, &people, person1, &peopleMaxCount);
@@ -90,7 +90,7 @@ int main() {
     person2->itemNames = (char **)malloc((person2->itemMaxCount) * sizeof(char *));
     person2->itemNumbers = (int *)malloc((person2->itemMaxCount) * sizeof(int));
     // Custom values
-    person2->name = "Arda";
+    person2->name = "arda";
     person2->location = "boun";
     // Add person instance to the people array
     addPerson(&peopleCount, &people, person2, &peopleMaxCount);
@@ -125,7 +125,10 @@ int main() {
         if (fgets(line, 1025, stdin) == NULL) {
             break;
         }
-        if (strcmp(line, "exit\n") == 0) {
+
+        // NOT DECIDED: WHAT TO DO IN CASE OF BLANK LINE ?
+
+        if(strcmp(line, "exit\n") == 0) {
             break;
         }
 
@@ -138,10 +141,10 @@ int main() {
             addElement(&wordCount, &words, t, &wordsMaxSize);
         }
 
-        // Check whether first word is "who"
+        // Question 1: who at ... ?
         if(strcmp(words[0], "who") == 0) {
             // Check if the question format is correct
-            if (wordCount != 4){
+            if(wordCount != 4){
                 printf("INVALID\n");
                 continue;
             }
@@ -187,7 +190,7 @@ int main() {
             }
 
             // Print people at this location
-            for (int i = 0; i < atLocationCount - 1; i++) {
+            for(int i = 0; i < atLocationCount - 1; i++) {
                 printf("%s and ", atLocation[i]);
             }
             printf("%s\n", atLocation[atLocationCount - 1]);
@@ -195,6 +198,159 @@ int main() {
 
             free(atLocation);
             free(words);
+            continue;
+        }
+
+        // Question 2-3: total ? / where ?
+        if(wordCount == 3) {
+            // Check if the first word is a forbidden word
+            if(isKeyword(words[0]) == true || isForbiddenWord(words[0]) == true) {
+                printf("INVALID\n");
+                continue;
+            }
+
+            if(strcmp(words[1], "total") == 0) {
+                if(strcmp(words[2], "?") != 0) {
+                    printf("INVALID\n");
+                    continue;
+                }
+
+                char *subjectName = words[0];
+                int subjectFound = false;
+                for(int i = 0; i < peopleCount; i++) {
+                    if(strcmp(people[i]->name, subjectName) == 0) {  // Subject found
+                        subjectFound = true;
+                        int hasItem = false;
+                        int itemCount = people[i]->itemCount;
+                        // Print the items of the subject with their counts
+                        for(int j = 0; j < itemCount - 1; j++) {
+                            if(people[i]->itemNumbers[j] > 0) {
+                                hasItem = true;
+                                printf("%d %s and ", people[i]->itemNumbers[j], people[i]->itemNames[j]);
+                            }
+                        }
+
+                        if(people[i]->itemNumbers[itemCount - 1] > 0) {
+                            hasItem = true;
+                            printf("%d %s\n", people[i]->itemNumbers[itemCount - 1], people[i]->itemNames[itemCount - 1]);
+                        }
+
+                        if(hasItem == false) {  // Subject does not have any items
+                            printf("NOTHING\n");
+                        }
+                        break;
+                    }
+                }
+
+                if(subjectFound == false) {  // NOT DECIDED: Subject does not exist yet
+                    printf("INVALID\n");
+                }
+                continue;
+            }
+
+            if(strcmp(words[1], "where") == 0) {
+                if(strcmp(words[2], "?") != 0) {
+                    printf("INVALID\n");
+                    continue;
+                }
+
+                char *subjectName = words[0];
+                int subjectFound = false;
+                for(int i = 0; i < peopleCount; i++) {
+                    if(strcmp(people[i]->name, subjectName) == 0) {
+                        subjectFound = true;
+                        printf("%s\n", people[i]->location);
+                        break;
+                    }
+                }
+
+                if(subjectFound == false) {
+                    printf("INVALID\n");
+                }
+                continue;
+            }
+        }
+
+        // Question 4: total ... ?
+        int totalQuestion = false;
+        int totalIndex;
+        for(int i = 0; i < wordCount; i++) {
+            if(strcmp(words[i], "total") == 0) {
+                totalQuestion = true;
+                totalIndex = i;
+                break;
+            }
+        }
+
+        if(totalQuestion == true) {
+            // Check formatting of the question
+            if(totalIndex + 3 != wordCount) {
+                printf("INVALID\n");
+                continue;
+            }
+            if(isKeyword(words[totalIndex + 1]) == true || isForbiddenWord(words[totalIndex + 1]) == true) {  // Check if item name is forbidden
+                printf("INVALID\n");
+                continue;
+            }
+            if(strcmp(words[totalIndex + 2], "?") != 0) {
+                printf("INVALID\n");
+                continue;
+            }
+            if(strcmp(words[totalIndex - 1], "and") == 0) {
+                printf("INVALID\n");
+                continue;
+            }
+
+            int subjectCount = 0;  // Amount of current subjects we want to look for
+            char *subjects[200];
+            int invalidFormat = false;
+            for(int i = 0; i < totalIndex; i++) {
+                if(i % 2 == 1) {  // Words with odd indices should be "and"
+                    if(strcmp(words[i], "and") != 0) {
+                        printf("INVALID\n");
+                        invalidFormat = true;
+                        break;
+                    }
+                    continue;  // Do not add "and" to subjects array
+                }
+
+                // Check if subject names are forbidden words
+                if(isKeyword(words[i]) == true || isForbiddenWord(words[i]) == true) {
+                    printf("INVALID\n");
+                    invalidFormat = true;
+                    break;
+                }
+
+                subjects[i] = words[i];
+                subjectCount++;
+            }
+
+            if(invalidFormat == true) {
+                continue;
+            }
+
+            // Print total amount of items of the subjects
+            int totalItemCount = 0;
+            int validPeople = 0;  // Keep track of the subjects that exist in our people array
+            for(int i = 0; i < subjectCount; i++) {
+                for(int j = 0; j < peopleCount; j++) {
+                    if(strcmp(people[j]->name, subjects[i]) == 0) {
+                        validPeople++;
+                        for(int k = 0; k < people[j]->itemCount; k++) {
+                            if(strcmp(people[j]->itemNames[k], words[totalIndex + 1]) == 0) {
+                                totalItemCount += people[j]->itemNumbers[k];
+                            }
+                        }
+                    }
+                }
+            }
+
+            if(validPeople != subjectCount) {  // There are subjects that do not exist in people array
+                printf("INVALID\n");
+                continue;
+            }
+
+            printf("%d\n", totalItemCount);
             continue;
         }
 
