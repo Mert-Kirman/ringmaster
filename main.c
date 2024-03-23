@@ -10,6 +10,10 @@ char forbiddenWords[3][8] = { "NOBODY", "NOTHING", "NOWHERE"};
 // Used for parsing
 char keywords[16][6] = {"sell", "buy", "go", "to", "from", "and", "at", "has", "if",
                         "less", "more", "than", "exit", "where", "total", "who"};
+// Array of actions that will be used for parsing a line
+char actions[3][5] = {"sell", "buy", "go"};
+// Array of conditions that will be used for parsing a line
+char conditions[2][4] = {"at", "has"};
 
 struct Person {
     char *name;
@@ -22,6 +26,9 @@ struct Person {
 
 // Add a word to an array
 void addElement(int *wordCount, char ***words, char *word, int *wordsMaxSize);
+
+// Add a new sentence to an array of sentences
+void addSentence(int *sentencesCount, char ****sentences, char **newSentence, int *sentencesMaxCount, int **wordCountInEachSentence, int sentenceWordCount);
 
 // Add a new person to people array
 void addPerson(int *peopleCount, struct Person ***people, struct Person *newPerson, int *peopleMaxCount);
@@ -140,6 +147,8 @@ int main() {
         for(t = strtok(line, " \n"); t != NULL; t = strtok(NULL, " \n")) {
             addElement(&wordCount, &words, t, &wordsMaxSize);
         }
+
+        // Question Sentences
 
         // Question 1: who at ... ?
         if(strcmp(words[0], "who") == 0) {
@@ -354,6 +363,49 @@ int main() {
             continue;
         }
 
+        // Break current line into action sentences
+        int sentencesCount = 0;
+        int sentencesMaxCount = 1;
+        char ***sentences = (char ***)malloc(sentencesMaxCount * sizeof(char **));
+        int *wordCountInEachSentence = (int *)malloc(sentencesMaxCount * sizeof(int));  // Integer array that keeps the word count in each sentence inside "sentences" array
+
+        int startIndexOfCurrentSentence = 0;  // Starting point of the sentence we are currently working on
+        for(int i = 0; i < wordCount; i++) {
+            for(int j = 0; j < 3; j++) {  // Check if this word is an action word
+                if(strcmp(words[i], actions[j]) == 0) {  // Find out what kind of action word this is
+                    if(strcmp(actions[j], "go") == 0) {
+                        int sentenceWordCount = 0;  // Current count of words inside this sentence
+                        int sentenceWordMaxCount = 1;  // Max count of words this sentence is capable of holding
+                        char **newSentence = (char **)malloc(sentenceWordCount * sizeof(char *));
+
+                        for(int k = startIndexOfCurrentSentence; k < i + 3; k++) {
+                            addElement(&sentenceWordCount, &newSentence, words[k], &sentenceWordMaxCount);  // Create a sentence which has action "go"
+                        }
+
+                        addSentence(&sentencesCount, &sentences, newSentence, &sentencesMaxCount, &wordCountInEachSentence, sentenceWordCount);  // Add this newly formed sentence to the sentences array
+                        i += 2;  // Bypass the following 2 words: "to [location]"
+                        startIndexOfCurrentSentence = i + 1;
+                        break;
+                    }
+
+                    if(strcmp(actions[j], "sell") == 0) {
+                        ;
+                    }
+
+                    if(strcmp(actions[j], "buy") == 0) {
+                        ;
+                    }
+                }
+            }
+        }
+
+        for(int i = 0; i < sentencesCount; i++) {
+            for(int j = 0; j < wordCountInEachSentence[i]; j++) {
+                printf("%s ", sentences[i][j]);
+            }
+            printf("\n");
+        }
+
         free(words);
     }
 
@@ -367,6 +419,18 @@ void addElement(int *wordCount, char ***words, char *word, int *wordsMaxSize) {
     if(*wordCount == *wordsMaxSize) {  // Array is full, double its size
         *wordsMaxSize *= 2;
         *words = (char **)realloc(*words, (*wordsMaxSize) * sizeof(char *));
+    }
+}
+
+void addSentence(int *sentencesCount, char ****sentences, char **newSentence, int *sentencesMaxCount, int **wordCountInEachSentence, int sentenceWordCount) {
+    (*sentences)[*sentencesCount] = newSentence;
+    (*wordCountInEachSentence)[*sentencesCount] = sentenceWordCount;
+    (*sentencesCount)++;
+
+    if(*sentencesCount == *sentencesMaxCount) {  // Array is full, double its size
+        *sentencesMaxCount *= 2;
+        *sentences = (char ***)realloc(*sentences, (*sentencesMaxCount) * sizeof(char **));
+        *wordCountInEachSentence = (int *)realloc(*wordCountInEachSentence, (*sentencesMaxCount) * sizeof(int));
     }
 }
 
