@@ -398,7 +398,7 @@ int main() {
                 if(isConditionWord(words[j]) == true) {
                     indexOfLastConditionWord = j;
                 }
-                if(isActionWord(words[j]) == true) {
+                else if(isActionWord(words[j]) == true) {
                     indexOfNextSentenceAction = j;
                     break;
                 }
@@ -442,6 +442,16 @@ int main() {
                 startIndexOfCurrentSentence = startIndexOfNextSentence;
             }
         }
+
+        // Store the remaining basic sentence if it exists
+        int sentenceWordCount = 0;  // Current count of words inside this sentence
+        int sentenceWordMaxCount = 1;  // Max count of words this sentence is capable of holding
+        char **newSentence = (char **)malloc(sentenceWordCount * sizeof(char *));
+
+        for(int i = startIndexOfCurrentSentence; i < wordCount; i++) {
+            addElement(&sentenceWordCount, &newSentence, words[i], &sentenceWordMaxCount);  // Create the basic sentence which, if exists, is the last sentence of the line
+        }
+        addSentence(&sentencesCount, &sentences, newSentence, &sentencesMaxCount, &wordCountInEachSentence, sentenceWordCount);  // Add this newly formed basic sentence to the sentences array
 
         // Test if the sequential sentences are split into if sentences correctly
         printf("\n\n\n");
