@@ -36,11 +36,20 @@ void addPerson(int *peopleCount, struct Person ***people, struct Person *newPers
 // Add a new or existing item to a person's item list
 void addItem(int *itemCount, char ***itemNames, char *newItem, int * itemMaxCount, int **itemNumbers);
 
+// Add an integer to an int array
+void addInteger(int *integerCount, int **integers, int integer, int *integersMaxSize);
+
 // Check if a word is a keyword
 int isKeyword(char *word);
 
 // Check if a word is forbidden
 int isForbiddenWord(char *word);
+
+// Check if a word is an action word
+int isActionWord(char *word);
+
+// Check if a word is a condition word
+int isConditionWord(char *word);
 
 int main() {
 
@@ -363,47 +372,84 @@ int main() {
             continue;
         }
 
-        // Break current line into action sentences
+        // Break current sequential line into simpler if sentences
         int sentencesCount = 0;
         int sentencesMaxCount = 1;
         char ***sentences = (char ***)malloc(sentencesMaxCount * sizeof(char **));
         int *wordCountInEachSentence = (int *)malloc(sentencesMaxCount * sizeof(int));  // Integer array that keeps the word count in each sentence inside "sentences" array
 
         int startIndexOfCurrentSentence = 0;  // Starting point of the sentence we are currently working on
-        for(int i = 0; i < wordCount; i++) {
-            for(int j = 0; j < 3; j++) {  // Check if this word is an action word
-                if(strcmp(words[i], actions[j]) == 0) {  // Find out what kind of action word this is
-                    if(strcmp(actions[j], "go") == 0) {
-                        int sentenceWordCount = 0;  // Current count of words inside this sentence
-                        int sentenceWordMaxCount = 1;  // Max count of words this sentence is capable of holding
-                        char **newSentence = (char **)malloc(sentenceWordCount * sizeof(char *));
-
-                        for(int k = startIndexOfCurrentSentence; k < i + 3; k++) {
-                            addElement(&sentenceWordCount, &newSentence, words[k], &sentenceWordMaxCount);  // Create a sentence which has action "go"
-                        }
-
-                        addSentence(&sentencesCount, &sentences, newSentence, &sentencesMaxCount, &wordCountInEachSentence, sentenceWordCount);  // Add this newly formed sentence to the sentences array
-                        i += 2;  // Bypass the following 2 words: "to [location]"
-                        startIndexOfCurrentSentence = i + 1;
-                        break;
-                    }
-
-                    if(strcmp(actions[j], "sell") == 0) {
-                        ;
-                    }
-
-                    if(strcmp(actions[j], "buy") == 0) {
-                        ;
-                    }
-                }
+        int ifIndexCount = 0;
+        int ifIndexMaxCount = 1;
+        int *ifIndexArray = (int *)malloc(ifIndexMaxCount * sizeof(int));  // Keep track of the indices of each "if" word
+        for(int i = 0; i < wordCount; i++) {  // Get the number of if sentences
+            if(strcmp(words[i], "if") == 0) {
+                addInteger(&ifIndexCount, &ifIndexArray, i, &ifIndexMaxCount);  // Add the index of this "if" word to the indices array
             }
         }
 
+        for(int i = 0; i < ifIndexCount; i++) {  // There is at least 1 if sentence
+            int indexOfIf = ifIndexArray[i];
+
+            // Find the start of the next sentence after this if sentence
+            int indexOfLastConditionWord;
+            int indexOfNextSentenceAction;  // Index of the action word in the beginning of the next sentence
+            for(int j = indexOfIf + 1; j < wordCount; j++) {
+                if(isConditionWord(words[j]) == true) {
+                    indexOfLastConditionWord = j;
+                }
+                if(isActionWord(words[j]) == true) {
+                    indexOfNextSentenceAction = j;
+                    break;
+                }
+            }
+
+            // Separate if sentences according to 6 cases
+            int startIndexOfNextSentence;
+            if(strcmp(words[indexOfLastConditionWord], "at") == 0) {  // Case 1, 2, 3: If condition is "at", starting index of the next sentence is 'indexOfLastConditionWord + 3'
+                startIndexOfNextSentence = indexOfLastConditionWord + 3;
+
+                int sentenceWordCount = 0;  // Current count of words inside this sentence
+                int sentenceWordMaxCount = 1;  // Max count of words this sentence is capable of holding
+                char **newSentence = (char **)malloc(sentenceWordCount * sizeof(char *));
+
+                for(int j = startIndexOfCurrentSentence; j < startIndexOfNextSentence - 1; j++) {  // -1 because we don't want to take "and" words that combine "if sentences"
+                    addElement(&sentenceWordCount, &newSentence, words[j], &sentenceWordMaxCount);  // Create the ith "if" sentence
+                }
+                addSentence(&sentencesCount, &sentences, newSentence, &sentencesMaxCount, &wordCountInEachSentence, sentenceWordCount);  // Add this newly formed if sentence to the sentences array
+
+                startIndexOfCurrentSentence = startIndexOfNextSentence;
+            }
+            else if(strcmp(words[indexOfLastConditionWord], "has") == 0) {  // Case 4, 5, 6: If condition is "has", iterate until you come across a word without number preceding it
+                for(int j = indexOfNextSentenceAction - 2; j > indexOfLastConditionWord; j -= 2) {  // Iterate back until you don't come across "and"
+                    if(strcmp(words[j], "and") == 0) {
+                        startIndexOfNextSentence = j + 1;
+                        continue;
+                    }
+
+                    break;
+                }
+
+                int sentenceWordCount = 0;  // Current count of words inside this sentence
+                int sentenceWordMaxCount = 1;  // Max count of words this sentence is capable of holding
+                char **newSentence = (char **)malloc(sentenceWordCount * sizeof(char *));
+
+                for(int j = startIndexOfCurrentSentence; j < startIndexOfNextSentence - 1; j++) {
+                    addElement(&sentenceWordCount, &newSentence, words[j], &sentenceWordMaxCount);  // Create the ith "if" sentence
+                }
+                addSentence(&sentencesCount, &sentences, newSentence, &sentencesMaxCount, &wordCountInEachSentence, sentenceWordCount);  // Add this newly formed if sentence to the sentences array
+
+                startIndexOfCurrentSentence = startIndexOfNextSentence;
+            }
+        }
+
+        // Test if the sequential sentences are split into if sentences correctly
+        printf("\n\n\n");
         for(int i = 0; i < sentencesCount; i++) {
             for(int j = 0; j < wordCountInEachSentence[i]; j++) {
                 printf("%s ", sentences[i][j]);
             }
-            printf("\n");
+            printf("\n\n");
         }
 
         free(words);
@@ -467,6 +513,16 @@ void addItem(int *itemCount, char ***itemNames, char *newItem, int *itemMaxCount
     }
 }
 
+void addInteger(int *integerCount, int **integers, int integer, int *integersMaxSize) {
+    (*integers)[*integerCount] = integer;
+    (*integerCount)++;
+
+    if(*integerCount == *integersMaxSize) {  // Array is full, double its size
+        *integersMaxSize *= 2;
+        *integers = (int *)realloc(*integers, (*integersMaxSize) * sizeof(int));
+    }
+}
+
 int isKeyword(char *word) {
     for(int i = 0; i < sizeof(keywords) / sizeof(char *); i++) {
         if(strcmp(word, keywords[i]) == 0) {
@@ -480,6 +536,26 @@ int isKeyword(char *word) {
 int isForbiddenWord(char *word) {
     for(int i = 0; i < 3; i++) {
         if(strcmp(word, forbiddenWords[i]) == 0) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+int isActionWord(char *word) {
+    for(int i = 0; i < 3; i++) {
+        if(strcmp(word, actions[i]) == 0) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+int isConditionWord(char *word) {
+    for(int i = 0; i < 2; i++) {
+        if(strcmp(word, conditions[i]) == 0) {
             return true;
         }
     }
