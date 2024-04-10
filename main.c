@@ -30,6 +30,12 @@ void addElement(int *wordCount, char ***words, char *word, int *wordsMaxSize);
 // Add a new sentence to an array of sentences
 void addSentence(int *sentencesCount, char ****sentences, char **newSentence, int *sentencesMaxCount, int **wordCountInEachSentence, int sentenceWordCount);
 
+// Add a new atomic sentence to an array of atomic sentences(big sentence)
+void addAtomicSentence(int *sentencesCount, char ****atomicSentences, char **newAtomicSentence, int *sentencesMaxCount);
+
+// Add a new big sentence to an array of big sentences
+void addBigSentence(int *sentencesCount, char *****bigSentences, char ***newBigSentence, int *sentencesMaxCount);
+
 // Add a new person to people array
 void addPerson(int *peopleCount, struct Person ***people, struct Person *newPerson, int *peopleMaxCount);
 
@@ -411,7 +417,7 @@ int main() {
 
                 int sentenceWordCount = 0;  // Current count of words inside this sentence
                 int sentenceWordMaxCount = 1;  // Max count of words this sentence is capable of holding
-                char **newSentence = (char **)malloc(sentenceWordCount * sizeof(char *));
+                char **newSentence = (char **)malloc(sentenceWordMaxCount * sizeof(char *));
 
                 for(int j = startIndexOfCurrentSentence; j < startIndexOfNextSentence - 1; j++) {  // -1 because we don't want to take "and" words that combine "if sentences"
                     addElement(&sentenceWordCount, &newSentence, words[j], &sentenceWordMaxCount);  // Create the ith "if" sentence
@@ -432,7 +438,7 @@ int main() {
 
                 int sentenceWordCount = 0;  // Current count of words inside this sentence
                 int sentenceWordMaxCount = 1;  // Max count of words this sentence is capable of holding
-                char **newSentence = (char **)malloc(sentenceWordCount * sizeof(char *));
+                char **newSentence = (char **)malloc(sentenceWordMaxCount * sizeof(char *));
 
                 for(int j = startIndexOfCurrentSentence; j < startIndexOfNextSentence - 1; j++) {
                     addElement(&sentenceWordCount, &newSentence, words[j], &sentenceWordMaxCount);  // Create the ith "if" sentence
@@ -446,20 +452,257 @@ int main() {
         // Store the remaining basic sentence if it exists
         int sentenceWordCount = 0;  // Current count of words inside this sentence
         int sentenceWordMaxCount = 1;  // Max count of words this sentence is capable of holding
-        char **newSentence = (char **)malloc(sentenceWordCount * sizeof(char *));
+        char **newSentence = (char **)malloc(sentenceWordMaxCount * sizeof(char *));
 
         for(int i = startIndexOfCurrentSentence; i < wordCount; i++) {
             addElement(&sentenceWordCount, &newSentence, words[i], &sentenceWordMaxCount);  // Create the basic sentence which, if exists, is the last sentence of the line
         }
         addSentence(&sentencesCount, &sentences, newSentence, &sentencesMaxCount, &wordCountInEachSentence, sentenceWordCount);  // Add this newly formed basic sentence to the sentences array
 
-        // Test if the sequential sentences are split into if sentences correctly
-        printf("\n\n\n");
-        for(int i = 0; i < sentencesCount; i++) {
-            for(int j = 0; j < wordCountInEachSentence[i]; j++) {
-                printf("%s ", sentences[i][j]);
+        // Break the basic and if sentences into atomic(containing only 1 keyword) action and conditional sentences
+        int bigSentencesActionPartCount = 0;
+        int bigSentencesActionPartMaxCount = 1;
+        char ****bigSentencesActionPart = (char ****)malloc(bigSentencesActionPartMaxCount * sizeof(char *));  // Array which contains basic sentences or parts of if sentences before the "if" word
+
+        int bigSentencesConditionalPartCount = 0;
+        int bigSentencesConditionalPartMaxCount = 1;
+        char ****bigSentencesConditionalPart = (char ****)malloc(bigSentencesConditionalPartMaxCount * sizeof(char *));  // Array which contains parts of if sentences after the "if" word
+
+        int validFormat = true;
+
+        int atomicActionSentenceCount[sentencesCount];  // Integer array that keeps the count of atomic action sentences in each big sentence
+        int atomicConditionalSentenceCount[sentencesCount];
+
+        int atomicActionSentenceWordCount[sentencesCount][256];  // 2D array that keeps the number of words in each atomic sentence in its columns, each row is a different big sentence
+        int atomicConditionalSentenceWordCount[sentencesCount][256];
+
+        for(int i = 0; i < sentencesCount; i++) {  // Initialize above arrays
+            atomicActionSentenceCount[i] = 0;
+            atomicConditionalSentenceCount[i] = 0;
+            for(int j = 0; j < 256; j++) {
+                atomicActionSentenceWordCount[i][j] = 0;
+                atomicConditionalSentenceWordCount[i][j] = 0;
             }
-            printf("\n\n");
+        }
+
+        for(int i = 0; i < sentencesCount; i++) {
+            int actionSentencesCount = 0;
+            int actionSentencesMaxCount = 1;
+            char ***actionSentences = (char ***)malloc(actionSentencesMaxCount * sizeof(char **));  // Contains atomic action sentences in each sentence
+
+            int conditionalSentencesCount = 0;
+            int conditionalSentencesMaxCount = 1;
+            char ***conditionalSentences = (char ***)malloc(conditionalSentencesMaxCount * sizeof(char **));
+
+            int atomicSentenceStartIndex = 0;
+            int atomicSentenceEndIndex = 0;
+            for(int j = 0; j < wordCountInEachSentence[i]; j++) {
+                if(atomicSentenceStartIndex > j) {
+                    continue;
+                }
+
+                // Action atomic sentence
+                if(strcmp(sentences[i][j], "go") == 0) {  // If the basic sentence consists of "go" action
+                    atomicSentenceEndIndex = j + 2;
+
+                    // Create an atomic sentence
+                    int atomicSentenceWordCount = 0;
+                    int atomicSentenceWordMaxCount = 1;
+                    char **newAtomicActionSentence = (char **)malloc(atomicSentenceWordMaxCount * sizeof(char *));
+
+                    for(int k = atomicSentenceStartIndex; k <= atomicSentenceEndIndex; k++) {
+                        addElement(&atomicSentenceWordCount, &newAtomicActionSentence, sentences[i][j], &atomicSentenceWordMaxCount);
+                    }
+
+                    // Add this newly formed atomic sentence
+                    addAtomicSentence(&actionSentencesCount, &actionSentences, newAtomicActionSentence, &actionSentencesMaxCount);
+                    atomicActionSentenceCount[i]++;
+                    atomicActionSentenceWordCount[i][actionSentencesCount - 1] = atomicSentenceWordCount;
+
+                    atomicSentenceStartIndex = atomicSentenceEndIndex + 2;
+
+                    if(atomicSentenceEndIndex != wordCountInEachSentence[i] - 1) {
+                        // Check if atomic sentences are connected with "and" keyword, in accordance with the format
+                        if(strcmp(sentences[i][atomicSentenceEndIndex + 1], "and") != 0 && strcmp(sentences[i][atomicSentenceEndIndex + 1], "if") != 0) {
+                            validFormat = false;
+                        }
+                    }
+                }
+                else if(strcmp(sentences[i][j], "from") == 0 || strcmp(sentences[i][j], "to") == 0) {
+                    atomicSentenceEndIndex = j + 1;
+
+                    // Create an atomic sentence
+                    int atomicSentenceWordCount = 0;
+                    int atomicSentenceWordMaxCount = 1;
+                    char **newAtomicActionSentence = (char **)malloc(atomicSentenceWordMaxCount * sizeof(char *));
+
+                    for(int k = atomicSentenceStartIndex; k <= atomicSentenceEndIndex; k++) {
+                        addElement(&atomicSentenceWordCount, &newAtomicActionSentence, sentences[i][j], &atomicSentenceWordMaxCount);
+                    }
+                    addAtomicSentence(&actionSentencesCount, &actionSentences, newAtomicActionSentence, &actionSentencesMaxCount);
+                    atomicActionSentenceCount[i]++;
+                    atomicActionSentenceWordCount[i][actionSentencesCount - 1] = atomicSentenceWordCount;
+
+                    atomicSentenceStartIndex = atomicSentenceEndIndex + 2;
+
+                    if(atomicSentenceEndIndex != wordCountInEachSentence[i] - 1) {
+                        // Check if atomic sentences are connected with "and" keyword, in accordance with the format
+                        if(strcmp(sentences[i][atomicSentenceEndIndex + 1], "and") != 0 && strcmp(sentences[i][atomicSentenceEndIndex + 1], "if") != 0) {
+                            validFormat = false;
+                        }
+                    }
+                }
+                else if(strcmp(sentences[i][j], "buy") == 0 || strcmp(sentences[i][j], "sell") == 0) {
+                    for(int k = j; k < wordCountInEachSentence[i]; k+=3) {
+                        if(strcmp(sentences[i][k + 3], "if") == 0) {
+                            atomicSentenceEndIndex = k + 2;
+                            break;
+                        }
+                        else if(strcmp(sentences[i][k + 3], "and") == 0) {
+                            if(48 > sentences[i][k + 4][0] || sentences[i][k + 4][0] > 57) {  // If the word after "and" is not a number
+                                atomicSentenceEndIndex = k + 2;
+                                break;
+                            }
+                        }
+                    }
+
+                    // Create an atomic sentence
+                    int atomicSentenceWordCount = 0;
+                    int atomicSentenceWordMaxCount = 1;
+                    char **newAtomicActionSentence = (char **)malloc(atomicSentenceWordMaxCount * sizeof(char *));
+
+                    for(int k = atomicSentenceStartIndex; k <= atomicSentenceEndIndex; k++) {
+                        addElement(&atomicSentenceWordCount, &newAtomicActionSentence, sentences[i][j], &atomicSentenceWordMaxCount);
+                    }
+                    addAtomicSentence(&actionSentencesCount, &actionSentences, newAtomicActionSentence, &actionSentencesMaxCount);
+                    atomicActionSentenceCount[i]++;
+                    atomicActionSentenceWordCount[i][actionSentencesCount - 1] = atomicSentenceWordCount;
+
+                    atomicSentenceStartIndex = atomicSentenceEndIndex + 2;
+
+                    if(atomicSentenceEndIndex != wordCountInEachSentence[i] - 1) {
+                        // Check if atomic sentences are connected with "and" keyword, in accordance with the format
+                        if(strcmp(sentences[i][atomicSentenceEndIndex + 1], "and") != 0 && strcmp(sentences[i][atomicSentenceEndIndex + 1], "if") != 0) {
+                            validFormat = false;
+                        }
+                    }
+                }
+                // Conditional Atomic Sentence
+                else if(strcmp(sentences[i][j], "at") == 0) {
+                    atomicSentenceEndIndex = j + 1;
+
+                    // Create an atomic sentence
+                    int atomicSentenceWordCount = 0;
+                    int atomicSentenceWordMaxCount = 1;
+                    char **newAtomicConditionalSentence = (char **)malloc(atomicSentenceWordMaxCount * sizeof(char *));
+
+                    for(int k = atomicSentenceStartIndex; k <= atomicSentenceEndIndex; k++) {
+                        addElement(&atomicSentenceWordCount, &newAtomicConditionalSentence, sentences[i][j], &atomicSentenceWordMaxCount);
+                    }
+                    addAtomicSentence(&conditionalSentencesCount, &conditionalSentences, newAtomicConditionalSentence, &conditionalSentencesMaxCount);
+                    atomicConditionalSentenceCount[i]++;
+                    atomicConditionalSentenceWordCount[i][conditionalSentencesCount - 1] = atomicSentenceWordCount;
+
+                    atomicSentenceStartIndex = atomicSentenceEndIndex + 2;
+
+                    if(atomicSentenceEndIndex != wordCountInEachSentence[i] - 1) {
+                        // Check if atomic sentences are connected with "and" keyword, in accordance with the format
+                        if(strcmp(sentences[i][atomicSentenceEndIndex + 1], "and") != 0) {
+                            validFormat = false;
+                        }
+                    }
+                }
+                else if(strcmp(sentences[i][j], "than") == 0) {
+                    for(int k = j; k < wordCountInEachSentence[i]; k+=3) {
+                        if(strcmp(sentences[i][k + 3], "and") == 0) {
+                            if(48 > sentences[i][k + 4][0] || sentences[i][k + 4][0] > 57) {  // If the word after "and" is not a number
+                                atomicSentenceEndIndex = k + 2;
+                                break;
+                            }
+                        }
+                    }
+
+                    // Create an atomic sentence
+                    int atomicSentenceWordCount = 0;
+                    int atomicSentenceWordMaxCount = 1;
+                    char **newAtomicConditionalSentence = (char **)malloc(atomicSentenceWordMaxCount * sizeof(char *));
+
+                    for(int k = atomicSentenceStartIndex; k <= atomicSentenceEndIndex; k++) {
+                        addElement(&atomicSentenceWordCount, &newAtomicConditionalSentence, sentences[i][j], &atomicSentenceWordMaxCount);
+                    }
+                    addAtomicSentence(&conditionalSentencesCount, &conditionalSentences, newAtomicConditionalSentence, &conditionalSentencesMaxCount);
+                    atomicConditionalSentenceCount[i]++;
+                    atomicConditionalSentenceWordCount[i][conditionalSentencesCount - 1] = atomicSentenceWordCount;
+
+                    atomicSentenceStartIndex = atomicSentenceEndIndex + 2;
+
+                    if(atomicSentenceEndIndex != wordCountInEachSentence[i] - 1) {
+                        // Check if atomic sentences are connected with "and" keyword, in accordance with the format
+                        if(strcmp(sentences[i][atomicSentenceEndIndex + 1], "and") != 0) {
+                            validFormat = false;
+                        }
+                    }
+                }
+                else if(strcmp(sentences[i][j], "has") == 0) {
+                    for(int k = j; k < wordCountInEachSentence[i]; k+=3) {
+                        if(strcmp(sentences[i][k + 3], "and") == 0) {
+                            if(48 > sentences[i][k + 4][0] || sentences[i][k + 4][0] > 57) {  // If the word after "and" is not a number
+                                atomicSentenceEndIndex = k + 2;
+                                break;
+                            }
+                        }
+                    }
+
+                    // Create an atomic sentence
+                    int atomicSentenceWordCount = 0;
+                    int atomicSentenceWordMaxCount = 1;
+                    char **newAtomicConditionalSentence = (char **)malloc(atomicSentenceWordMaxCount * sizeof(char *));
+
+                    for(int k = atomicSentenceStartIndex; k <= atomicSentenceEndIndex; k++) {
+                        addElement(&atomicSentenceWordCount, &newAtomicConditionalSentence, sentences[i][j], &atomicSentenceWordMaxCount);
+                    }
+                    addAtomicSentence(&conditionalSentencesCount, &conditionalSentences, newAtomicConditionalSentence, &conditionalSentencesMaxCount);
+                    atomicConditionalSentenceCount[i]++;
+                    atomicConditionalSentenceWordCount[i][conditionalSentencesCount - 1] = atomicSentenceWordCount;
+
+                    atomicSentenceStartIndex = atomicSentenceEndIndex + 2;
+
+                    if(atomicSentenceEndIndex != wordCountInEachSentence[i] - 1) {
+                        // Check if atomic sentences are connected with "and" keyword, in accordance with the format
+                        if(strcmp(sentences[i][atomicSentenceEndIndex + 1], "and") != 0) {
+                            validFormat = false;
+                        }
+                    }
+                }
+
+            }
+
+            if(validFormat == false) {
+                break;
+            }
+
+            // Store each big sentence
+            addBigSentence(&bigSentencesActionPartCount, &bigSentencesActionPart, actionSentences, &bigSentencesActionPartMaxCount);
+            addBigSentence(&bigSentencesConditionalPartCount, &bigSentencesConditionalPart, conditionalSentences, &bigSentencesConditionalPartMaxCount);
+
+            // TEST CODE !!!!!!!!!!!!!!!!!!!
+            int bigSentenceCount = 0;
+            for(int j = 0; j < sentencesCount; j++) {
+                for(int k = 0; k < atomicActionSentenceCount[j]; k++) {
+                    printf("ATOMIC ACTION SENTENCES:\n\n");
+                    for(int l = 0; l < atomicActionSentenceWordCount[j][k]; l++) {
+                        printf("%s ", bigSentencesActionPart[j][k][l]);
+                    }
+                    printf("\n");
+                }
+            }
+        }
+
+        if(validFormat == false) {
+            printf("INVALID\n");
+        }
+        else {
+            ;
         }
 
         free(words);
@@ -487,6 +730,26 @@ void addSentence(int *sentencesCount, char ****sentences, char **newSentence, in
         *sentencesMaxCount *= 2;
         *sentences = (char ***)realloc(*sentences, (*sentencesMaxCount) * sizeof(char **));
         *wordCountInEachSentence = (int *)realloc(*wordCountInEachSentence, (*sentencesMaxCount) * sizeof(int));
+    }
+}
+
+void addAtomicSentence(int *sentencesCount, char ****atomicSentences, char **newAtomicSentence, int *sentencesMaxCount) {
+    (*atomicSentences)[*sentencesCount] = newAtomicSentence;
+    (*sentencesCount)++;
+
+    if(*sentencesCount == *sentencesMaxCount) {  // Array is full, double its size
+        *sentencesMaxCount *= 2;
+        *atomicSentences = (char ***)realloc(*atomicSentences, (*sentencesMaxCount) * sizeof(char **));
+    }
+}
+
+void addBigSentence(int *sentencesCount, char *****bigSentences, char ***newBigSentence, int *sentencesMaxCount) {
+    (*bigSentences)[*sentencesCount] = newBigSentence;
+    (*sentencesCount)++;
+
+    if(*sentencesCount == *sentencesMaxCount) {  // Array is full, double its size
+        *sentencesMaxCount *= 2;
+        *bigSentences = (char ****)realloc(*bigSentences, (*sentencesMaxCount) * sizeof(char **));
     }
 }
 
