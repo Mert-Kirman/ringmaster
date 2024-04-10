@@ -528,8 +528,23 @@ int main() {
                         }
                     }
                 }
-                else if(strcmp(sentences[i][j], "from") == 0 || strcmp(sentences[i][j], "to") == 0) {
-                    atomicSentenceEndIndex = j + 1;
+                else if(strcmp(sentences[i][j], "buy") == 0) {
+                    for(int k = j; k < wordCountInEachSentence[i]; k+=3) {
+                        if(strcmp(sentences[i][k + 3], "if") == 0) {
+                            atomicSentenceEndIndex = k + 2;
+                            break;
+                        }
+                        else if(strcmp(sentences[i][k + 3], "from") == 0) {
+                            atomicSentenceEndIndex = k + 4;
+                            break;
+                        }
+                        else if(strcmp(sentences[i][k + 3], "and") == 0) {
+                            if(48 > sentences[i][k + 4][0] || sentences[i][k + 4][0] > 57) {  // If the word after "and" is not a number
+                                atomicSentenceEndIndex = k + 2;
+                                break;
+                            }
+                        }
+                    }
 
                     // Create an atomic sentence
                     int atomicSentenceWordCount = 0;
@@ -552,10 +567,14 @@ int main() {
                         }
                     }
                 }
-                else if(strcmp(sentences[i][j], "buy") == 0 || strcmp(sentences[i][j], "sell") == 0) {
+                else if(strcmp(sentences[i][j], "sell") == 0) {
                     for(int k = j; k < wordCountInEachSentence[i]; k+=3) {
                         if(strcmp(sentences[i][k + 3], "if") == 0) {
                             atomicSentenceEndIndex = k + 2;
+                            break;
+                        }
+                        else if(strcmp(sentences[i][k + 3], "to") == 0) {
+                            atomicSentenceEndIndex = k + 4;
                             break;
                         }
                         else if(strcmp(sentences[i][k + 3], "and") == 0) {
@@ -612,38 +631,10 @@ int main() {
                         }
                     }
                 }
-                else if(strcmp(sentences[i][j], "than") == 0) {
-                    for(int k = j; k < wordCountInEachSentence[i]; k+=3) {
-                        if(strcmp(sentences[i][k + 3], "and") == 0) {
-                            if(48 > sentences[i][k + 4][0] || sentences[i][k + 4][0] > 57) {  // If the word after "and" is not a number
-                                atomicSentenceEndIndex = k + 2;
-                                break;
-                            }
-                        }
-                    }
-
-                    // Create an atomic sentence
-                    int atomicSentenceWordCount = 0;
-                    int atomicSentenceWordMaxCount = 1;
-                    char **newAtomicConditionalSentence = (char **)malloc(atomicSentenceWordMaxCount * sizeof(char *));
-
-                    for(int k = atomicSentenceStartIndex; k <= atomicSentenceEndIndex; k++) {
-                        addElement(&atomicSentenceWordCount, &newAtomicConditionalSentence, sentences[i][j], &atomicSentenceWordMaxCount);
-                    }
-                    addAtomicSentence(&conditionalSentencesCount, &conditionalSentences, newAtomicConditionalSentence, &conditionalSentencesMaxCount);
-                    atomicConditionalSentenceCount[i]++;
-                    atomicConditionalSentenceWordCount[i][conditionalSentencesCount - 1] = atomicSentenceWordCount;
-
-                    atomicSentenceStartIndex = atomicSentenceEndIndex + 2;
-
-                    if(atomicSentenceEndIndex != wordCountInEachSentence[i] - 1) {
-                        // Check if atomic sentences are connected with "and" keyword, in accordance with the format
-                        if(strcmp(sentences[i][atomicSentenceEndIndex + 1], "and") != 0) {
-                            validFormat = false;
-                        }
-                    }
-                }
                 else if(strcmp(sentences[i][j], "has") == 0) {
+                    if(strcmp(sentences[i][j+2], "than") == 0) {
+                        j += 2;
+                    }
                     for(int k = j; k < wordCountInEachSentence[i]; k+=3) {
                         if(strcmp(sentences[i][k + 3], "and") == 0) {
                             if(48 > sentences[i][k + 4][0] || sentences[i][k + 4][0] > 57) {  // If the word after "and" is not a number
