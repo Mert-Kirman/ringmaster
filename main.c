@@ -511,7 +511,7 @@ int main() {
                     char **newAtomicActionSentence = (char **)malloc(atomicSentenceWordMaxCount * sizeof(char *));
 
                     for(int k = atomicSentenceStartIndex; k <= atomicSentenceEndIndex; k++) {
-                        addElement(&atomicSentenceWordCount, &newAtomicActionSentence, sentences[i][j], &atomicSentenceWordMaxCount);
+                        addElement(&atomicSentenceWordCount, &newAtomicActionSentence, sentences[i][k], &atomicSentenceWordMaxCount);
                     }
 
                     // Add this newly formed atomic sentence
@@ -529,16 +529,19 @@ int main() {
                     }
                 }
                 else if(strcmp(sentences[i][j], "buy") == 0) {
+                    if(j + 2 == wordCountInEachSentence[i] - 1) {  // If "buy" is the last action in a sentence, k + 3 will always give false
+                        atomicSentenceEndIndex = j + 2;
+                    }
                     for(int k = j; k < wordCountInEachSentence[i]; k+=3) {
-                        if(strcmp(sentences[i][k + 3], "if") == 0) {
+                        if((k + 3 < wordCountInEachSentence[i]) && (strcmp(sentences[i][k + 3], "if") == 0)) {
                             atomicSentenceEndIndex = k + 2;
                             break;
                         }
-                        else if(strcmp(sentences[i][k + 3], "from") == 0) {
+                        else if((k + 3 < wordCountInEachSentence[i]) && (strcmp(sentences[i][k + 3], "from") == 0)) {
                             atomicSentenceEndIndex = k + 4;
                             break;
                         }
-                        else if(strcmp(sentences[i][k + 3], "and") == 0) {
+                        else if((k + 3 < wordCountInEachSentence[i]) && (strcmp(sentences[i][k + 3], "and") == 0)) {
                             if(48 > sentences[i][k + 4][0] || sentences[i][k + 4][0] > 57) {  // If the word after "and" is not a number
                                 atomicSentenceEndIndex = k + 2;
                                 break;
@@ -552,7 +555,7 @@ int main() {
                     char **newAtomicActionSentence = (char **)malloc(atomicSentenceWordMaxCount * sizeof(char *));
 
                     for(int k = atomicSentenceStartIndex; k <= atomicSentenceEndIndex; k++) {
-                        addElement(&atomicSentenceWordCount, &newAtomicActionSentence, sentences[i][j], &atomicSentenceWordMaxCount);
+                        addElement(&atomicSentenceWordCount, &newAtomicActionSentence, sentences[i][k], &atomicSentenceWordMaxCount);
                     }
                     addAtomicSentence(&actionSentencesCount, &actionSentences, newAtomicActionSentence, &actionSentencesMaxCount);
                     atomicActionSentenceCount[i]++;
@@ -568,16 +571,19 @@ int main() {
                     }
                 }
                 else if(strcmp(sentences[i][j], "sell") == 0) {
+                    if(j + 2 == wordCountInEachSentence[i] - 1) {  // If "sell" is the last action in a sentence, k + 3 will always give false
+                        atomicSentenceEndIndex = j + 2;
+                    }
                     for(int k = j; k < wordCountInEachSentence[i]; k+=3) {
-                        if(strcmp(sentences[i][k + 3], "if") == 0) {
+                        if((k + 3 < wordCountInEachSentence[i]) && (strcmp(sentences[i][k + 3], "if") == 0)) {
                             atomicSentenceEndIndex = k + 2;
                             break;
                         }
-                        else if(strcmp(sentences[i][k + 3], "to") == 0) {
+                        else if((k + 3 < wordCountInEachSentence[i]) && (strcmp(sentences[i][k + 3], "to") == 0)) {
                             atomicSentenceEndIndex = k + 4;
                             break;
                         }
-                        else if(strcmp(sentences[i][k + 3], "and") == 0) {
+                        else if((k + 3 < wordCountInEachSentence[i]) && (strcmp(sentences[i][k + 3], "and") == 0)) {
                             if(48 > sentences[i][k + 4][0] || sentences[i][k + 4][0] > 57) {  // If the word after "and" is not a number
                                 atomicSentenceEndIndex = k + 2;
                                 break;
@@ -591,7 +597,7 @@ int main() {
                     char **newAtomicActionSentence = (char **)malloc(atomicSentenceWordMaxCount * sizeof(char *));
 
                     for(int k = atomicSentenceStartIndex; k <= atomicSentenceEndIndex; k++) {
-                        addElement(&atomicSentenceWordCount, &newAtomicActionSentence, sentences[i][j], &atomicSentenceWordMaxCount);
+                        addElement(&atomicSentenceWordCount, &newAtomicActionSentence, sentences[i][k], &atomicSentenceWordMaxCount);
                     }
                     addAtomicSentence(&actionSentencesCount, &actionSentences, newAtomicActionSentence, &actionSentencesMaxCount);
                     atomicActionSentenceCount[i]++;
@@ -616,7 +622,7 @@ int main() {
                     char **newAtomicConditionalSentence = (char **)malloc(atomicSentenceWordMaxCount * sizeof(char *));
 
                     for(int k = atomicSentenceStartIndex; k <= atomicSentenceEndIndex; k++) {
-                        addElement(&atomicSentenceWordCount, &newAtomicConditionalSentence, sentences[i][j], &atomicSentenceWordMaxCount);
+                        addElement(&atomicSentenceWordCount, &newAtomicConditionalSentence, sentences[i][k], &atomicSentenceWordMaxCount);
                     }
                     addAtomicSentence(&conditionalSentencesCount, &conditionalSentences, newAtomicConditionalSentence, &conditionalSentencesMaxCount);
                     atomicConditionalSentenceCount[i]++;
@@ -632,12 +638,15 @@ int main() {
                     }
                 }
                 else if(strcmp(sentences[i][j], "has") == 0) {
-                    if(strcmp(sentences[i][j+2], "than") == 0) {
+                    if((j + 2 < wordCountInEachSentence[i]) && (strcmp(sentences[i][j+2], "than") == 0)) {
                         j += 2;
                     }
+                    else if(j + 2 == wordCountInEachSentence[i] - 1) {  // If "has" is the last condition in a sentence, k + 3 will always give false
+                        atomicSentenceEndIndex = j + 2;
+                    }
                     for(int k = j; k < wordCountInEachSentence[i]; k+=3) {
-                        if(strcmp(sentences[i][k + 3], "and") == 0) {
-                            if(48 > sentences[i][k + 4][0] || sentences[i][k + 4][0] > 57) {  // If the word after "and" is not a number
+                        if((k + 3 < wordCountInEachSentence[i]) && (strcmp(sentences[i][k + 3], "and") == 0)) {
+                            if((k + 4 < wordCountInEachSentence[i]) && (48 > sentences[i][k + 4][0] || sentences[i][k + 4][0] > 57)) {  // If the word after "and" is not a number
                                 atomicSentenceEndIndex = k + 2;
                                 break;
                             }
@@ -650,7 +659,7 @@ int main() {
                     char **newAtomicConditionalSentence = (char **)malloc(atomicSentenceWordMaxCount * sizeof(char *));
 
                     for(int k = atomicSentenceStartIndex; k <= atomicSentenceEndIndex; k++) {
-                        addElement(&atomicSentenceWordCount, &newAtomicConditionalSentence, sentences[i][j], &atomicSentenceWordMaxCount);
+                        addElement(&atomicSentenceWordCount, &newAtomicConditionalSentence, sentences[i][k], &atomicSentenceWordMaxCount);
                     }
                     addAtomicSentence(&conditionalSentencesCount, &conditionalSentences, newAtomicConditionalSentence, &conditionalSentencesMaxCount);
                     atomicConditionalSentenceCount[i]++;
@@ -675,19 +684,29 @@ int main() {
             // Store each big sentence
             addBigSentence(&bigSentencesActionPartCount, &bigSentencesActionPart, actionSentences, &bigSentencesActionPartMaxCount);
             addBigSentence(&bigSentencesConditionalPartCount, &bigSentencesConditionalPart, conditionalSentences, &bigSentencesConditionalPartMaxCount);
-
-            // TEST CODE !!!!!!!!!!!!!!!!!!!
-            int bigSentenceCount = 0;
-            for(int j = 0; j < sentencesCount; j++) {
-                for(int k = 0; k < atomicActionSentenceCount[j]; k++) {
-                    printf("ATOMIC ACTION SENTENCES:\n\n");
-                    for(int l = 0; l < atomicActionSentenceWordCount[j][k]; l++) {
-                        printf("%s ", bigSentencesActionPart[j][k][l]);
-                    }
-                    printf("\n");
-                }
-            }
         }
+
+        // TEST CODE !!!!!!!!!!!!!!!!!!!
+        for(int j = 0; j < sentencesCount; j++) {
+            printf("ATOMIC ACTION SENTENCES:\n\n");
+            for(int k = 0; k < atomicActionSentenceCount[j]; k++) {
+                for(int l = 0; l < atomicActionSentenceWordCount[j][k]; l++) {
+                    printf("%s ", bigSentencesActionPart[j][k][l]);
+                }
+                printf("\n");
+            }
+            printf("\n\n");
+
+            printf("ATOMIC CONDITIONAL SENTENCES:\n\n");
+            for(int k = 0; k < atomicConditionalSentenceCount[j]; k++) {
+                for(int l = 0; l < atomicConditionalSentenceWordCount[j][k]; l++) {
+                    printf("%s ", bigSentencesConditionalPart[j][k][l]);
+                }
+                printf("\n");
+            }
+            printf("\n\n\n");
+        }
+        // TEST CODE END !!!!!!!!!!!!!!!
 
         if(validFormat == false) {
             printf("INVALID\n");
