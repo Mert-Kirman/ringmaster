@@ -557,6 +557,11 @@ int main() {
                     for(int k = atomicSentenceStartIndex; k <= atomicSentenceEndIndex; k++) {
                         addElement(&atomicSentenceWordCount, &newAtomicActionSentence, sentences[i][k], &atomicSentenceWordMaxCount);
                     }
+                    if(atomicSentenceWordCount == 0) {  // Sentence is empty because atomicSentenceEndIndex is pointed to the previous atomic sentence's end index due to faulty format "Frodo buy and ..."
+                        validFormat = false;
+                        break;
+                    }
+
                     addAtomicSentence(&actionSentencesCount, &actionSentences, newAtomicActionSentence, &actionSentencesMaxCount);
                     atomicActionSentenceCount[i]++;
                     atomicActionSentenceWordCount[i][actionSentencesCount - 1] = atomicSentenceWordCount;
@@ -599,6 +604,11 @@ int main() {
                     for(int k = atomicSentenceStartIndex; k <= atomicSentenceEndIndex; k++) {
                         addElement(&atomicSentenceWordCount, &newAtomicActionSentence, sentences[i][k], &atomicSentenceWordMaxCount);
                     }
+                    if(atomicSentenceWordCount == 0) {
+                        validFormat = false;
+                        break;
+                    }
+
                     addAtomicSentence(&actionSentencesCount, &actionSentences, newAtomicActionSentence, &actionSentencesMaxCount);
                     atomicActionSentenceCount[i]++;
                     atomicActionSentenceWordCount[i][actionSentencesCount - 1] = atomicSentenceWordCount;
@@ -661,6 +671,11 @@ int main() {
                     for(int k = atomicSentenceStartIndex; k <= atomicSentenceEndIndex; k++) {
                         addElement(&atomicSentenceWordCount, &newAtomicConditionalSentence, sentences[i][k], &atomicSentenceWordMaxCount);
                     }
+                    if(atomicSentenceWordCount == 0) {
+                        validFormat = false;
+                        break;
+                    }
+
                     addAtomicSentence(&conditionalSentencesCount, &conditionalSentences, newAtomicConditionalSentence, &conditionalSentencesMaxCount);
                     atomicConditionalSentenceCount[i]++;
                     atomicConditionalSentenceWordCount[i][conditionalSentencesCount - 1] = atomicSentenceWordCount;
@@ -686,33 +701,308 @@ int main() {
             addBigSentence(&bigSentencesConditionalPartCount, &bigSentencesConditionalPart, conditionalSentences, &bigSentencesConditionalPartMaxCount);
         }
 
-        // TEST CODE !!!!!!!!!!!!!!!!!!!
+        if(validFormat == false) {  // If atomic sentences are not connected via "and", print "INVALID"
+            printf("INVALID\n");
+            free(words);
+            continue;
+        }
+
+        // Check formatting further
+        int breakCompletely = false;
         for(int j = 0; j < sentencesCount; j++) {
-            printf("ATOMIC ACTION SENTENCES:\n\n");
+            // Check atomic action sentence formatting
             for(int k = 0; k < atomicActionSentenceCount[j]; k++) {
                 for(int l = 0; l < atomicActionSentenceWordCount[j][k]; l++) {
-                    printf("%s ", bigSentencesActionPart[j][k][l]);
-                }
-                printf("\n");
-            }
-            printf("\n\n");
+                    if(strcmp(bigSentencesActionPart[j][k][l], "go") == 0) {
+                        // After the "go" action keyword
+                        if(strcmp(bigSentencesActionPart[j][k][l + 1], "to") != 0) {
+                            validFormat = false;
+                            breakCompletely = true;
+                            break;
+                        }
+                        if(isForbiddenWord(bigSentencesActionPart[j][k][l + 2]) == true || isKeyword(bigSentencesActionPart[j][k][l + 2]) == true) {
+                            validFormat = false;
+                            breakCompletely = true;
+                            break;
+                        }
 
-            printf("ATOMIC CONDITIONAL SENTENCES:\n\n");
+                        // Before the "go" action keyword
+                        for(int m = 0; m < l; m++) {  // Check if names are connected via "and"
+                            if(m % 2 == 0) {
+                                if(isForbiddenWord(bigSentencesActionPart[j][k][m]) == true || isKeyword(bigSentencesActionPart[j][k][m]) == true) {  // People names are invalid
+                                    validFormat = false;
+                                    breakCompletely = true;
+                                    break;
+                                }
+                            }
+                            else {
+                                if(strcmp(bigSentencesActionPart[j][k][m], "and") != 0) {
+                                    validFormat = false;
+                                    breakCompletely = true;
+                                    break;
+                                }
+                            }
+                        }
+                        break;
+                    }
+                    else if(strcmp(bigSentencesActionPart[j][k][l], "buy") == 0) {
+                        // Before the "buy" action keyword
+                        for(int m = 0; m < l; m++) {  // Check if names are connected via "and"
+                            if(m % 2 == 0) {
+                                if(isForbiddenWord(bigSentencesActionPart[j][k][m]) == true || isKeyword(bigSentencesActionPart[j][k][m]) == true) {  // People names are invalid
+                                    validFormat = false;
+                                    breakCompletely = true;
+                                    break;
+                                }
+                            }
+                            else {
+                                if(strcmp(bigSentencesActionPart[j][k][m], "and") != 0) {
+                                    validFormat = false;
+                                    breakCompletely = true;
+                                    break;
+                                }
+                            }
+                        }
+                        if(breakCompletely) {
+                            break;
+                        }
+
+                        // After the "buy" action keyword
+                        for(int m = l; m < atomicActionSentenceWordCount[j][k]; m+=3) {
+                            if(m + 2 == atomicActionSentenceWordCount[j][k] - 1) {
+                                if(bigSentencesActionPart[j][k][m + 1][0] < 48 || bigSentencesActionPart[j][k][m + 1][0] > 57) {  // Check if buy is succeeded by a numeric value
+                                    validFormat = false;
+                                    breakCompletely = true;
+                                    break;
+                                }
+                                if(isKeyword(bigSentencesActionPart[j][k][m + 2]) == true || isForbiddenWord(bigSentencesActionPart[j][k][m + 2]) == true) {
+                                    validFormat = false;
+                                    breakCompletely = true;
+                                    break;
+                                }
+                                break;
+                            }
+                            else if(strcmp(bigSentencesActionPart[j][k][m], "from") == 0) {
+                                if(m + 1 != atomicActionSentenceWordCount[j][k] - 1) {  // There should be only 1 subject after the "from" keyword
+                                    validFormat = false;
+                                    breakCompletely = true;
+                                    break;
+                                }
+                                else if(isKeyword(bigSentencesActionPart[j][k][m + 1]) == true || isForbiddenWord(bigSentencesActionPart[j][k][m + 1]) == true) {  // Subject name should be valid
+                                    validFormat = false;
+                                    breakCompletely = true;
+                                    break;
+                                }
+                            }
+                            else if(strcmp(bigSentencesActionPart[j][k][m + 3], "and") != 0 && strcmp(bigSentencesActionPart[j][k][m + 3], "from") != 0) {
+                                validFormat = false;
+                                breakCompletely = true;
+                                break;
+                            }
+                            else {
+                                if(bigSentencesActionPart[j][k][m + 1][0] < 48 || bigSentencesActionPart[j][k][m + 1][0] > 57) {  // Check if buy is succeeded by a numeric value
+                                    validFormat = false;
+                                    breakCompletely = true;
+                                    break;
+                                }
+                                if(isKeyword(bigSentencesActionPart[j][k][m + 2]) == true || isForbiddenWord(bigSentencesActionPart[j][k][m + 2]) == true) {
+                                    validFormat = false;
+                                    breakCompletely = true;
+                                    break;
+                                }
+                            }
+                        }
+                        break;
+                    }
+                    else if(strcmp(bigSentencesActionPart[j][k][l], "sell") == 0) {
+                        // Before the "sell" action keyword
+                        for(int m = 0; m < l; m++) {  // Check if names are connected via "and"
+                            if(m % 2 == 0) {
+                                if(isForbiddenWord(bigSentencesActionPart[j][k][m]) == true || isKeyword(bigSentencesActionPart[j][k][m]) == true) {  // People names are invalid
+                                    validFormat = false;
+                                    breakCompletely = true;
+                                    break;
+                                }
+                            }
+                            else {
+                                if(strcmp(bigSentencesActionPart[j][k][m], "and") != 0) {
+                                    validFormat = false;
+                                    breakCompletely = true;
+                                    break;
+                                }
+                            }
+                        }
+                        if(breakCompletely) {
+                            break;
+                        }
+
+                        // After the "sell" action keyword
+                        for(int m = l; m < atomicActionSentenceWordCount[j][k]; m+=3) {
+                            if(m + 2 == atomicActionSentenceWordCount[j][k] - 1) {
+                                if(bigSentencesActionPart[j][k][m + 1][0] < 48 || bigSentencesActionPart[j][k][m + 1][0] > 57) {  // Check if sell is succeeded by a numeric value
+                                    validFormat = false;
+                                    breakCompletely = true;
+                                    break;
+                                }
+                                if(isKeyword(bigSentencesActionPart[j][k][m + 2]) == true || isForbiddenWord(bigSentencesActionPart[j][k][m + 2]) == true) {
+                                    validFormat = false;
+                                    breakCompletely = true;
+                                    break;
+                                }
+                                break;
+                            }
+                            else if(strcmp(bigSentencesActionPart[j][k][m], "to") == 0) {
+                                if(m + 1 != atomicActionSentenceWordCount[j][k] - 1) {  // There should be only 1 subject after the "to" keyword
+                                    validFormat = false;
+                                    breakCompletely = true;
+                                    break;
+                                }
+                                else if(isKeyword(bigSentencesActionPart[j][k][m + 1]) == true || isForbiddenWord(bigSentencesActionPart[j][k][m + 1]) == true) {  // Subject name should be valid
+                                    validFormat = false;
+                                    breakCompletely = true;
+                                    break;
+                                }
+                            }
+                            else if(strcmp(bigSentencesActionPart[j][k][m + 3], "and") != 0 && strcmp(bigSentencesActionPart[j][k][m + 3], "to") != 0) {
+                                validFormat = false;
+                                breakCompletely = true;
+                                break;
+                            }
+                            else {
+                                if(bigSentencesActionPart[j][k][m + 1][0] < 48 || bigSentencesActionPart[j][k][m + 1][0] > 57) {  // Check if sell is succeeded by a numeric value
+                                    validFormat = false;
+                                    breakCompletely = true;
+                                    break;
+                                }
+                                if(isKeyword(bigSentencesActionPart[j][k][m + 2]) == true || isForbiddenWord(bigSentencesActionPart[j][k][m + 2]) == true) {
+                                    validFormat = false;
+                                    breakCompletely = true;
+                                    break;
+                                }
+                            }
+                        }
+                        break;
+                    }
+                }
+                if(breakCompletely) {
+                    break;
+                }
+            }
+            if(breakCompletely) {
+                break;
+            }
+
+            // Check atomic conditional sentence formatting
             for(int k = 0; k < atomicConditionalSentenceCount[j]; k++) {
                 for(int l = 0; l < atomicConditionalSentenceWordCount[j][k]; l++) {
-                    printf("%s ", bigSentencesConditionalPart[j][k][l]);
+                    if(strcmp(bigSentencesConditionalPart[j][k][l], "at") == 0) {
+                        // After the "at" conditional keyword
+                        if(isForbiddenWord(bigSentencesConditionalPart[j][k][l + 1]) == true || isKeyword(bigSentencesConditionalPart[j][k][l + 1]) == true) {
+                            validFormat = false;
+                            breakCompletely = true;
+                            break;
+                        }
+
+                        // Before the "at" conditional keyword
+                        for(int m = 0; m < l; m++) {  // Check if names are connected via "and"
+                            if(m % 2 == 0) {
+                                if(isForbiddenWord(bigSentencesConditionalPart[j][k][m]) == true || isKeyword(bigSentencesConditionalPart[j][k][m]) == true) {  // People names are invalid
+                                    validFormat = false;
+                                    breakCompletely = true;
+                                    break;
+                                }
+                            }
+                            else {
+                                if(strcmp(bigSentencesConditionalPart[j][k][m], "and") != 0) {
+                                    validFormat = false;
+                                    breakCompletely = true;
+                                    break;
+                                }
+                            }
+                        }
+                        break;
+                    }
+                    else if(strcmp(bigSentencesConditionalPart[j][k][l], "has") == 0) {
+                        // Before the "has" conditional keyword
+                        for(int m = 0; m < l; m++) {  // Check if names are connected via "and"
+                            if(m % 2 == 0) {
+                                if(isForbiddenWord(bigSentencesConditionalPart[j][k][m]) == true || isKeyword(bigSentencesConditionalPart[j][k][m]) == true) {  // People names are invalid
+                                    validFormat = false;
+                                    breakCompletely = true;
+                                    break;
+                                }
+                            }
+                            else {
+                                if(strcmp(bigSentencesConditionalPart[j][k][m], "and") != 0) {
+                                    validFormat = false;
+                                    breakCompletely = true;
+                                    break;
+                                }
+                            }
+                        }
+                        if(breakCompletely) {
+                            break;
+                        }
+
+                        // After the "has" conditional keyword
+                        // Adjust the index of 'l' so that if we have "has more than" l should point to 'than', otherwise l should point to 'has'
+                        if(strcmp(bigSentencesConditionalPart[j][k][l + 2], "than") == 0) {
+                            if(strcmp(bigSentencesConditionalPart[j][k][l + 1], "less") != 0 && strcmp(bigSentencesConditionalPart[j][k][l + 1], "more") != 0) {  // It must be either "has less than" or "has more than"
+                                validFormat = false;
+                                breakCompletely = true;
+                                break;
+                            }
+                            l += 2;
+                        }
+                        for(int m = l; m < atomicConditionalSentenceWordCount[j][k]; m+=3) {
+                            if(m + 2 == atomicConditionalSentenceWordCount[j][k] - 1) {
+                                if(bigSentencesConditionalPart[j][k][m + 1][0] < 48 || bigSentencesConditionalPart[j][k][m + 1][0] > 57) {  // Check if "has" or "than" is succeeded by a numeric value
+                                    validFormat = false;
+                                    breakCompletely = true;
+                                    break;
+                                }
+                                if(isKeyword(bigSentencesConditionalPart[j][k][m + 2]) == true || isForbiddenWord(bigSentencesConditionalPart[j][k][m + 2]) == true) {
+                                    validFormat = false;
+                                    breakCompletely = true;
+                                    break;
+                                }
+                                break;
+                            }
+                            else if(strcmp(bigSentencesConditionalPart[j][k][m + 3], "and") != 0) {
+                                validFormat = false;
+                                breakCompletely = true;
+                                break;
+                            }
+                            else {
+                                if(bigSentencesConditionalPart[j][k][m + 1][0] < 48 || bigSentencesConditionalPart[j][k][m + 1][0] > 57) {  // Check if "has" or "than" is succeeded by a numeric value
+                                    validFormat = false;
+                                    breakCompletely = true;
+                                    break;
+                                }
+                                if(isKeyword(bigSentencesConditionalPart[j][k][m + 2]) == true || isForbiddenWord(bigSentencesConditionalPart[j][k][m + 2]) == true) {
+                                    validFormat = false;
+                                    breakCompletely = true;
+                                    break;
+                                }
+                            }
+                        }
+                        break;
+                    }
                 }
-                printf("\n");
+                if(breakCompletely) {
+                    break;
+                }
             }
-            printf("\n\n\n");
+            if(breakCompletely) {
+                break;
+            }
         }
-        // TEST CODE END !!!!!!!!!!!!!!!
 
         if(validFormat == false) {
             printf("INVALID\n");
         }
         else {
-            ;
+            printf("VALID\n");
         }
 
         free(words);
