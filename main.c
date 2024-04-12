@@ -456,11 +456,12 @@ int main() {
                     }
                 }
                 else if(strcmp(sentences[i][j], "buy") == 0) {
-                    if(j + 2 == wordCountInEachSentence[i] - 1) {  // If "buy" is the last action in a sentence, k + 3 will always give false
-                        atomicSentenceEndIndex = j + 2;
-                    }
                     for(int k = j; k < wordCountInEachSentence[i]; k+=3) {
-                        if((k + 3 < wordCountInEachSentence[i]) && (strcmp(sentences[i][k + 3], "if") == 0)) {
+                        if(k + 2 == wordCountInEachSentence[i] - 1) {  // If "buy" is the last action in a sentence, k + 3 will always give false
+                            atomicSentenceEndIndex = k + 2;
+                            break;
+                        }
+                        else if((k + 3 < wordCountInEachSentence[i]) && (strcmp(sentences[i][k + 3], "if") == 0)) {
                             atomicSentenceEndIndex = k + 2;
                             break;
                         }
@@ -503,11 +504,12 @@ int main() {
                     }
                 }
                 else if(strcmp(sentences[i][j], "sell") == 0) {
-                    if(j + 2 == wordCountInEachSentence[i] - 1) {  // If "sell" is the last action in a sentence, k + 3 will always give false
-                        atomicSentenceEndIndex = j + 2;
-                    }
                     for(int k = j; k < wordCountInEachSentence[i]; k+=3) {
-                        if((k + 3 < wordCountInEachSentence[i]) && (strcmp(sentences[i][k + 3], "if") == 0)) {
+                        if(k + 2 == wordCountInEachSentence[i] - 1) {  // If "sell" is the last action in a sentence, k + 3 will always give false
+                            atomicSentenceEndIndex = k + 2;
+                            break;
+                        }
+                        else if((k + 3 < wordCountInEachSentence[i]) && (strcmp(sentences[i][k + 3], "if") == 0)) {
                             atomicSentenceEndIndex = k + 2;
                             break;
                         }
@@ -1100,9 +1102,11 @@ int main() {
                         int breakCompletely3 = false;
                         for(int k = 0; k < atomicActionSentenceWordCount[i][j]; k++) {
                             if(strcmp(bigSentencesActionPart[i][j][k], "go") == 0) {
-                                char *location = bigSentencesActionPart[i][j][k + 2];
+                                char *location = (char *)malloc(strlen(bigSentencesActionPart[i][j][k + 2]) + 1);
+                                strcpy(location, bigSentencesActionPart[i][j][k + 2]);
                                 for(int l = 0; l < k; l+=2) {  // Traverse subjects in the atomic action sentence
-                                    char *name = bigSentencesActionPart[i][j][l];
+                                    char *name = (char *)malloc(strlen(bigSentencesActionPart[i][j][l]) + 1);
+                                    strcpy(name, bigSentencesActionPart[i][j][l]);
                                     int personFound = false;
                                     for(int m = 0; m < peopleCount; m++) {  // Traverse people array
                                         if(strcmp(people[m]->name, name) == 0) {
@@ -1129,14 +1133,16 @@ int main() {
                             else if(strcmp(bigSentencesActionPart[i][j][k], "buy") == 0) {
                                 if(strcmp(bigSentencesActionPart[i][j][atomicActionSentenceWordCount[i][j] - 2], "from") == 0) {  // buy ... from
                                     int buyerCount = (k + 1) / 2;
-                                    char *seller = bigSentencesActionPart[i][j][atomicActionSentenceWordCount[i][j] - 1];
+                                    char *seller = (char *)malloc(strlen(bigSentencesActionPart[i][j][atomicActionSentenceWordCount[i][j] - 1]) + 1);
+                                    strcpy(seller, bigSentencesActionPart[i][j][atomicActionSentenceWordCount[i][j] - 1]);
 
                                     int indexOfSeller = -1;  // Index of the seller in our people array
 
                                     // Check if the seller exists and has enough items for all buyers
-                                    for(int l = k + 1; l < atomicActionSentenceWordCount[i][j] - 2; l+=2) {  // For each item to be bought from the seller
+                                    for(int l = k + 1; l < atomicActionSentenceWordCount[i][j] - 2; l+=3) {  // For each item to be bought from the seller
                                         int itemCount = atoi(bigSentencesActionPart[i][j][l]);
-                                        char *itemName = bigSentencesActionPart[i][j][l + 1];
+                                        char *itemName = (char *)malloc(strlen(bigSentencesActionPart[i][j][l + 1]) + 1);
+                                        strcpy(itemName, bigSentencesActionPart[i][j][l + 1]);
 
                                         int sellerFound = false;
                                         for(int m = 0; m < peopleCount; m++) {  // Traverse people array to find the seller
@@ -1180,9 +1186,10 @@ int main() {
                                     }
 
                                     // Seller exists and has enough items for all of buyers
-                                    for(int l = k + 1; l < atomicActionSentenceWordCount[i][j] - 2; l+=2) {  // For each item to be bought from the seller
+                                    for(int l = k + 1; l < atomicActionSentenceWordCount[i][j] - 2; l+=3) {  // For each item to be bought from the seller
                                         int itemCount = atoi(bigSentencesActionPart[i][j][l]);
-                                        char *itemName = bigSentencesActionPart[i][j][l + 1];
+                                        char *itemName = (char *)malloc(strlen(bigSentencesActionPart[i][j][l + 1]) + 1);
+                                        strcpy(itemName, bigSentencesActionPart[i][j][l + 1]);
 
                                         // Decrement from seller
                                         for(int m = 0; m < people[indexOfSeller]->itemCount; m++) {
@@ -1194,7 +1201,8 @@ int main() {
 
                                         // Increment items of buyers
                                         for(int m = 0; m < k; m+=2) {  // For each buyer
-                                            char *buyerName = bigSentencesActionPart[i][j][m];
+                                            char *buyerName = (char *)malloc(strlen(bigSentencesActionPart[i][j][m]) + 1);
+                                            strcpy(buyerName, bigSentencesActionPart[i][j][m]);
 
                                             // Iterate people array to find buyer structs
                                             int buyerFound = false;
@@ -1230,13 +1238,15 @@ int main() {
                                     }
                                 }
                                 else {  // buy
-                                    for(int l = k + 1; l < atomicActionSentenceWordCount[i][j]; l+=2) {  // For each item to be bought
+                                    for(int l = k + 1; l < atomicActionSentenceWordCount[i][j]; l+=3) {  // For each item to be bought
                                         int itemCount = atoi(bigSentencesActionPart[i][j][l]);
-                                        char *itemName = bigSentencesActionPart[i][j][l + 1];
+                                        char *itemName = (char *)malloc(strlen(bigSentencesActionPart[i][j][l + 1]) + 1);
+                                        strcpy(itemName, bigSentencesActionPart[i][j][l + 1]);
 
                                         // Increment items of buyers
                                         for(int m = 0; m < k; m+=2) {  // For each buyer
-                                            char *buyerName = bigSentencesActionPart[i][j][m];
+                                            char *buyerName = (char *)malloc(strlen(bigSentencesActionPart[i][j][m]) + 1);
+                                            strcpy(buyerName, bigSentencesActionPart[i][j][m]);
 
                                             // Iterate people array to find buyer structs
                                             int buyerFound = false;
@@ -1275,13 +1285,15 @@ int main() {
                             else if(strcmp(bigSentencesActionPart[i][j][k], "sell") == 0) {
                                 if(strcmp(bigSentencesActionPart[i][j][atomicActionSentenceWordCount[i][j] - 2], "to") == 0) {  // sell ... to
                                     int sellerCount = (k + 1) / 2;
-                                    char *buyerName = bigSentencesActionPart[i][j][atomicActionSentenceWordCount[i][j] - 1];
+                                    char *buyerName = (char *)malloc(strlen(bigSentencesActionPart[i][j][atomicActionSentenceWordCount[i][j] - 1]) + 1);
+                                    strcpy(buyerName, bigSentencesActionPart[i][j][atomicActionSentenceWordCount[i][j] - 1]);
 
                                     // Check if the sellers exist and have enough items for the buyer
                                     for(int x = 0; x < k; x+=2) {  // Iterate sellers in the atomic action sentence
-                                        for(int l = k + 1; l < atomicActionSentenceWordCount[i][j] - 2; l+=2) {  // For each item to be bought from the seller
+                                        for(int l = k + 1; l < atomicActionSentenceWordCount[i][j] - 2; l+=3) {  // For each item to be sold to the buyer
                                             int itemCount = atoi(bigSentencesActionPart[i][j][l]);
-                                            char *itemName = bigSentencesActionPart[i][j][l + 1];
+                                            char *itemName = (char *)malloc(strlen(bigSentencesActionPart[i][j][l + 1]) + 1);
+                                            strcpy(itemName, bigSentencesActionPart[i][j][l + 1]);
 
                                             // Traverse people array to find the seller
                                             int sellerFound = false;
@@ -1333,13 +1345,15 @@ int main() {
                                     }
 
                                     // Sellers exist and have enough items for the buyer
-                                    for(int l = k + 1; l < atomicActionSentenceWordCount[i][j]; l+=2) {  // For each item to be sought to the buyer
+                                    for(int l = k + 1; l < atomicActionSentenceWordCount[i][j]; l+=3) {  // For each item to be sold to the buyer
                                         int itemCount = atoi(bigSentencesActionPart[i][j][l]);
-                                        char *itemName = bigSentencesActionPart[i][j][l + 1];
+                                        char *itemName = (char *)malloc(strlen(bigSentencesActionPart[i][j][l + 1]) + 1);
+                                        strcpy(itemName, bigSentencesActionPart[i][j][l + 1]);
 
                                         // Decrement from sellers
                                         for(int x = 0; x < k; x+=2) {
-                                            char *sellerName = bigSentencesActionPart[i][j][x];
+                                            char *sellerName = (char *)malloc(strlen(bigSentencesActionPart[i][j][x]) + 1);
+                                            strcpy(sellerName, bigSentencesActionPart[i][j][x]);
 
                                             for(int m = 0; m < peopleCount; m++) {
                                                 if(strcmp(people[m]->name, sellerName) == 0) {
@@ -1388,9 +1402,10 @@ int main() {
                                 else {  // sell
                                     // Check if the sellers exist and have enough items for the buyer
                                     for(int x = 0; x < k; x+=2) {  // Iterate sellers in the atomic action sentence
-                                        for(int l = k + 1; l < atomicActionSentenceWordCount[i][j] - 2; l+=2) {  // For each item to be sold
+                                        for(int l = k + 1; l < atomicActionSentenceWordCount[i][j] - 2; l+=3) {  // For each item to be sold
                                             int itemCount = atoi(bigSentencesActionPart[i][j][l]);
-                                            char *itemName = bigSentencesActionPart[i][j][l + 1];
+                                            char *itemName = (char *)malloc(strlen(bigSentencesActionPart[i][j][l + 1]) + 1);
+                                            strcpy(itemName, bigSentencesActionPart[i][j][l + 1]);
 
                                             // Traverse people array to find the seller
                                             int sellerFound = false;
@@ -1442,13 +1457,15 @@ int main() {
                                     }
 
                                     // Sellers exist and have enough items to sell
-                                    for(int l = k + 1; l < atomicActionSentenceWordCount[i][j]; l+=2) {  // For each item to be sold
+                                    for(int l = k + 1; l < atomicActionSentenceWordCount[i][j]; l+=3) {  // For each item to be sold
                                         int itemCount = atoi(bigSentencesActionPart[i][j][l]);
-                                        char *itemName = bigSentencesActionPart[i][j][l + 1];
+                                        char *itemName = (char *)malloc(strlen(bigSentencesActionPart[i][j][l + 1]) + 1);
+                                        strcpy(itemName, bigSentencesActionPart[i][j][l + 1]);
 
                                         // Decrement from sellers
                                         for(int x = 0; x < k; x+=2) {
-                                            char *sellerName = bigSentencesActionPart[i][j][x];
+                                            char *sellerName = (char *)malloc(strlen(bigSentencesActionPart[i][j][x]) + 1);
+                                            strcpy(sellerName, bigSentencesActionPart[i][j][x]);
 
                                             for(int m = 0; m < peopleCount; m++) {
                                                 if(strcmp(people[m]->name, sellerName) == 0) {
@@ -1472,9 +1489,6 @@ int main() {
 
         free(words);
     }
-
-
-    free(people);
 
     return 0;
 }
