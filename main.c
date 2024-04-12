@@ -67,79 +67,6 @@ int main() {
     struct Person **people;
     people = (struct Person **)malloc(peopleMaxCount * sizeof(struct Person *));
 
-    /* Add dummies for test purposes */
-    // Create a person instance
-    struct Person *person1 = (struct Person *)malloc(sizeof(struct Person));
-    // Default values for every person instance
-    person1->itemCount = 0;
-    person1->itemMaxCount = 1;
-    person1->itemNames = (char **)malloc((person1->itemMaxCount) * sizeof(char *));
-    person1->itemNumbers = (int *)malloc((person1->itemMaxCount) * sizeof(int));
-    // Custom values
-    person1->name = "mert";
-    person1->location = "boun";
-    // Add person instance to the people array
-    addPerson(&peopleCount, &people, person1, &peopleMaxCount);
-
-    printf("%s number is: %d\n", (person1->itemNames)[0], (person1->itemNumbers)[0]);
-
-    // Add a dummy item for person1
-    char *newItem = "elma";
-    addItem(&(person1->itemCount), &(person1->itemNames), newItem, &(person1->itemMaxCount), &(person1->itemNumbers));
-
-    printf("%s number is: %d\n", (person1->itemNames)[0], (person1->itemNumbers)[0]);
-
-    // Add the same dummy item for person1 again
-    newItem = "elma";
-    addItem(&(person1->itemCount), &(person1->itemNames), newItem, &(person1->itemMaxCount), &(person1->itemNumbers));
-
-    printf("%s number is: %d\n", (person1->itemNames)[0], (person1->itemNumbers)[0]);
-
-    // Add a different dummy item for person1
-    newItem = "armut";
-    addItem(&(person1->itemCount), &(person1->itemNames), newItem, &(person1->itemMaxCount), &(person1->itemNumbers));
-
-    printf("%s number is: %d\n", (person1->itemNames)[0], (person1->itemNumbers)[0]);
-    printf("%s number is: %d\n", (person1->itemNames)[1], (person1->itemNumbers)[1]);
-
-    printf("\nMOVING ON TO SECOND DUMMY PERSON\n\n");
-
-    // Create a second person instance
-    struct Person *person2 = (struct Person *)malloc(sizeof(struct Person));
-    // Default values for every person instance
-    person2->itemCount = 0;
-    person2->itemMaxCount = 1;
-    person2->itemNames = (char **)malloc((person2->itemMaxCount) * sizeof(char *));
-    person2->itemNumbers = (int *)malloc((person2->itemMaxCount) * sizeof(int));
-    // Custom values
-    person2->name = "arda";
-    person2->location = "boun";
-    // Add person instance to the people array
-    addPerson(&peopleCount, &people, person2, &peopleMaxCount);
-
-    printf("%s number is: %d\n", (person2->itemNames)[0], (person2->itemNumbers)[0]);
-
-    // Add a dummy item for person1
-    newItem = "muz";
-    addItem(&(person2->itemCount), &(person2->itemNames), newItem, &(person2->itemMaxCount), &(person2->itemNumbers));
-
-    printf("%s number is: %d\n", (person2->itemNames)[0], (person2->itemNumbers)[0]);
-
-    // Add the same dummy item for person2 again
-    newItem = "muz";
-    addItem(&(person2->itemCount), &(person2->itemNames), newItem, &(person2->itemMaxCount), &(person2->itemNumbers));
-
-    printf("%s number is: %d\n", (person2->itemNames)[0], (person2->itemNumbers)[0]);
-
-    // Add a different dummy item for person1
-    newItem = "cilek";
-    addItem(&(person2->itemCount), &(person2->itemNames), newItem, &(person2->itemMaxCount), &(person2->itemNumbers));
-
-    printf("%s number is: %d\n", (person2->itemNames)[0], (person2->itemNumbers)[0]);
-    printf("%s number is: %d\n", (person2->itemNames)[1], (person2->itemNumbers)[1]);
-    printf("\n\n");
-    /* END OF DUMMY TEST */
-
     while (1) {
         printf(">> ");
         fflush(stdout);
@@ -1002,11 +929,552 @@ int main() {
             printf("INVALID\n");
         }
         else {
-            printf("VALID\n");
+            printf("OK\n");
+            for(int i = 0; i < sentencesCount; i++) {
+                int breakCompletely2 = false;
+                int allConditionsTrue = true;
+                if(atomicConditionalSentenceCount[i] != 0) {  // There are conditions that need to be checked before processing actions
+                    for(int j = 0; j < atomicConditionalSentenceCount[j]; j++) {
+                        for(int k = 0; k < atomicConditionalSentenceWordCount[i][j]; k++) {
+                            if(strcmp(bigSentencesConditionalPart[i][j][k], "at") == 0) {
+                                char *location = bigSentencesConditionalPart[i][j][k + 1];
+                                for(int l = 0; l < k; l+=2) {
+                                    char *name = bigSentencesConditionalPart[i][j][l];
+                                    int personFound = false;
+                                    for(int m = 0; m < peopleCount; m++) {
+                                        if(strcmp(people[m]->name, name) == 0) {  // Person found
+                                            personFound = true;
+                                            if(strcmp(people[m]->location, location) != 0) {
+                                                allConditionsTrue = false;
+                                                break;
+                                            }
+                                        }
+                                    }
+                                    if(personFound == false || allConditionsTrue == false) {
+                                        allConditionsTrue = false;
+                                        breakCompletely2 = true;
+                                        break;
+                                    }
+                                }
+                                if(breakCompletely2) {
+                                    break;
+                                }
+                            }
+                            else if(strcmp(bigSentencesConditionalPart[i][j][k], "has") == 0) {
+                                if(strcmp(bigSentencesConditionalPart[i][j][k + 1], "less") == 0) {
+                                    for(int l = 0; l < k; l+=2) {  // Traverse subjects in the atomic condition sentence
+                                        char *name = bigSentencesConditionalPart[i][j][l];
+                                        for(int m = k + 3; m < atomicConditionalSentenceWordCount[i][j]; m+=3) {  // Traverse items in the atomic condition sentence
+                                            char *itemName = bigSentencesConditionalPart[i][j][m + 1];
+                                            char *itemCountChar = bigSentencesConditionalPart[i][j][m];
+                                            int itemCount = atoi(itemCountChar);
+
+                                            for(int n = 0; n < peopleCount; n++) {  // Traverse people array
+                                                if(strcmp(people[n]->name, name) == 0) {
+                                                    for(int p = 0; p < people[n]->itemCount; p++) {  // Traverse a person structure's items
+                                                        if(strcmp(people[n]->itemNames[p], itemName) == 0) {
+                                                            if(people[n]->itemNumbers[p] >= itemCount) {  // Item number does not match to condition
+                                                                allConditionsTrue = false;
+                                                                breakCompletely2 = true;
+                                                                break;
+                                                            }
+                                                        }
+                                                    }
+                                                    if(breakCompletely2) {
+                                                        break;
+                                                    }
+                                                }
+                                            }
+                                            if(breakCompletely2) {
+                                                break;
+                                            }
+                                        }
+                                        if(breakCompletely2) {
+                                            break;
+                                        }
+                                    }
+                                }
+                                else if(strcmp(bigSentencesConditionalPart[i][j][k], "more") == 0) {
+                                    for(int l = 0; l < k; l+=2) {  // Traverse subjects in the atomic condition sentence
+                                        char *name = bigSentencesConditionalPart[i][j][l];
+                                        int personFound = false;
+                                        for(int m = k + 3; m < atomicConditionalSentenceWordCount[i][j]; m+=3) {  // Traverse items in the atomic condition sentence
+                                            char *itemName = bigSentencesConditionalPart[i][j][m + 1];
+                                            char *itemCountChar = bigSentencesConditionalPart[i][j][m];
+                                            int itemCount = atoi(itemCountChar);
+                                            int itemFound = false;
+
+                                            for(int n = 0; n < peopleCount; n++) {  // Traverse people array
+                                                if(strcmp(people[n]->name, name) == 0) {
+                                                    personFound = true;
+                                                    for(int p = 0; p < people[n]->itemCount; p++) {  // Traverse a person structure's items
+                                                        if(strcmp(people[n]->itemNames[p], itemName) == 0) {
+                                                            itemFound = true;
+                                                            if(people[n]->itemNumbers[p] <= itemCount) {  // Item number does not match to condition
+                                                                allConditionsTrue = false;
+                                                                breakCompletely2 = true;
+                                                                break;
+                                                            }
+                                                        }
+                                                    }
+                                                    if(itemFound == false) {
+                                                        allConditionsTrue = false;
+                                                        breakCompletely2 = true;
+                                                    }
+                                                    if(breakCompletely2) {
+                                                        break;
+                                                    }
+                                                }
+                                            }
+                                            if(personFound == false) {
+                                                allConditionsTrue = false;
+                                                breakCompletely2 = true;
+                                            }
+                                            if(breakCompletely2) {
+                                                break;
+                                            }
+                                        }
+                                        if(breakCompletely2) {
+                                            break;
+                                        }
+                                    }
+                                }
+                                else {
+                                    for(int l = 0; l < k; l+=2) {  // Traverse subjects in the atomic condition sentence
+                                        char *name = bigSentencesConditionalPart[i][j][l];
+                                        int personFound = false;
+                                        for(int m = k + 3; m < atomicConditionalSentenceWordCount[i][j]; m+=3) {  // Traverse items in the atomic condition sentence
+                                            char *itemName = bigSentencesConditionalPart[i][j][m + 1];
+                                            char *itemCountChar = bigSentencesConditionalPart[i][j][m];
+                                            int itemCount = atoi(itemCountChar);
+                                            int itemFound = false;
+
+                                            for(int n = 0; n < peopleCount; n++) {  // Traverse people array
+                                                if(strcmp(people[n]->name, name) == 0) {
+                                                    personFound = true;
+                                                    for(int p = 0; p < people[n]->itemCount; p++) {  // Traverse a person structure's items
+                                                        if(strcmp(people[n]->itemNames[p], itemName) == 0) {
+                                                            itemFound = true;
+                                                            if(people[n]->itemNumbers[p] != itemCount) {  // Item number does not match to condition
+                                                                allConditionsTrue = false;
+                                                                breakCompletely2 = true;
+                                                                break;
+                                                            }
+                                                        }
+                                                    }
+                                                    if(itemFound == false) {
+                                                        allConditionsTrue = false;
+                                                        breakCompletely2 = true;
+                                                    }
+                                                    if(breakCompletely2) {
+                                                        break;
+                                                    }
+                                                }
+                                            }
+                                            if(personFound == false) {
+                                                allConditionsTrue = false;
+                                                breakCompletely2 = true;
+                                            }
+                                            if(breakCompletely2) {
+                                                break;
+                                            }
+                                        }
+                                        if(breakCompletely2) {
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                            if(breakCompletely2) {
+                                break;
+                            }
+                        }
+                        if(breakCompletely2) {
+                            break;
+                        }
+                    }
+                }
+
+                if(allConditionsTrue) {  // All conditions are met, proceed with actions
+                    for(int j = 0; j < atomicActionSentenceCount[j]; j++) {
+                        int breakCompletely3 = false;
+                        for(int k = 0; k < atomicActionSentenceWordCount[i][j]; k++) {
+                            if(strcmp(bigSentencesActionPart[i][j][k], "go") == 0) {
+                                char *location = bigSentencesActionPart[i][j][k + 2];
+                                for(int l = 0; l < k; l+=2) {  // Traverse subjects in the atomic action sentence
+                                    char *name = bigSentencesActionPart[i][j][l];
+                                    int personFound = false;
+                                    for(int m = 0; m < peopleCount; m++) {  // Traverse people array
+                                        if(strcmp(people[m]->name, name) == 0) {
+                                            personFound = true;
+                                            people[m]->location = location;
+                                            break;
+                                        }
+                                    }
+
+                                    if(personFound == false) {  // This person does not exist, create it
+                                        struct Person *person = (struct Person *)malloc(sizeof(struct Person));
+                                        person->itemCount = 0;
+                                        person->itemMaxCount = 1;
+                                        person->itemNames = (char **)malloc((person->itemMaxCount) * sizeof(char *));
+                                        person->itemNumbers = (int *)malloc((person->itemMaxCount) * sizeof(int));
+                                        person->name = name;
+                                        person->location = location;
+
+                                        // Add person instance to the people array
+                                        addPerson(&peopleCount, &people, person, &peopleMaxCount);
+                                    }
+                                }
+                            }
+                            else if(strcmp(bigSentencesActionPart[i][j][k], "buy") == 0) {
+                                if(strcmp(bigSentencesActionPart[i][j][atomicActionSentenceWordCount[i][j] - 2], "from") == 0) {  // buy ... from
+                                    int buyerCount = (k + 1) / 2;
+                                    char *seller = bigSentencesActionPart[i][j][atomicActionSentenceWordCount[i][j] - 1];
+
+                                    int indexOfSeller = -1;  // Index of the seller in our people array
+
+                                    // Check if the seller exists and has enough items for all buyers
+                                    for(int l = k + 1; l < atomicActionSentenceWordCount[i][j] - 2; l+=2) {  // For each item to be bought from the seller
+                                        int itemCount = atoi(bigSentencesActionPart[i][j][l]);
+                                        char *itemName = bigSentencesActionPart[i][j][l + 1];
+
+                                        int sellerFound = false;
+                                        for(int m = 0; m < peopleCount; m++) {  // Traverse people array to find the seller
+                                            if(strcmp(people[m]->name, seller) == 0) {  // Seller exists
+                                                sellerFound = true;
+                                                indexOfSeller = m;
+                                                int itemFound = false;
+                                                for(int n = 0; n < people[m]->itemCount; n++) {  // Traverse items of the seller
+                                                    if(strcmp(people[m]->itemNames[n], itemName) == 0) {
+                                                        itemFound = true;
+                                                        if(itemCount * buyerCount > people[m]->itemNumbers[n]) {  // If seller does not have enough items
+                                                            breakCompletely3 = true;
+                                                            break;
+                                                        }
+                                                    }
+
+                                                    if(itemFound) {
+                                                        break;
+                                                    }
+                                                }
+
+                                                if(itemFound == false || breakCompletely3) {
+                                                    breakCompletely3 = true;
+                                                    break;
+                                                }
+                                            }
+
+                                            if(sellerFound) {
+                                                break;
+                                            }
+                                        }
+
+                                        if(sellerFound == false || breakCompletely3) {
+                                            breakCompletely3 = true;
+                                            break;
+                                        }
+                                    }
+
+                                    if(breakCompletely3) {
+                                        break;
+                                    }
+
+                                    // Seller exists and has enough items for all of buyers
+                                    for(int l = k + 1; l < atomicActionSentenceWordCount[i][j] - 2; l+=2) {  // For each item to be bought from the seller
+                                        int itemCount = atoi(bigSentencesActionPart[i][j][l]);
+                                        char *itemName = bigSentencesActionPart[i][j][l + 1];
+
+                                        // Decrement from seller
+                                        for(int m = 0; m < people[indexOfSeller]->itemCount; m++) {
+                                            if(strcmp(people[indexOfSeller]->itemNames[m], itemName) == 0) {
+                                                people[indexOfSeller]->itemNumbers[m] -= itemCount * buyerCount;
+                                                break;
+                                            }
+                                        }
+
+                                        // Increment items of buyers
+                                        for(int m = 0; m < k; m+=2) {  // For each buyer
+                                            char *buyerName = bigSentencesActionPart[i][j][m];
+
+                                            // Iterate people array to find buyer structs
+                                            int buyerFound = false;
+                                            int indexOfBuyer = -1;
+                                            for(int n = 0; n < peopleCount; n++) {  // Find the index of buyer if he exists
+                                                if(strcmp(people[n]->name, buyerName) == 0) {
+                                                    buyerFound = true;
+                                                    indexOfBuyer = n;
+                                                    break;
+                                                }
+                                            }
+
+                                            if(buyerFound == false) {  // If buyer person does not exist, create it
+                                                struct Person *person = (struct Person *)malloc(sizeof(struct Person));
+                                                person->itemCount = 0;
+                                                person->itemMaxCount = 1;
+                                                person->itemNames = (char **)malloc((person->itemMaxCount) * sizeof(char *));
+                                                person->itemNumbers = (int *)malloc((person->itemMaxCount) * sizeof(int));
+                                                person->name = buyerName;
+                                                person->location = "NOWHERE";
+
+                                                // Add person instance to the people array
+                                                addPerson(&peopleCount, &people, person, &peopleMaxCount);
+
+                                                indexOfBuyer = peopleCount - 1;
+                                            }
+
+                                            // Add this item "itemCount" many times
+                                            for(int p = 0; p < itemCount; p++) {
+                                                addItem(&(people[indexOfBuyer]->itemCount), &(people[indexOfBuyer]->itemNames), itemName, &(people[indexOfBuyer]->itemMaxCount), &(people[indexOfBuyer]->itemNumbers));
+                                            }
+                                        }
+                                    }
+                                }
+                                else {  // buy
+                                    for(int l = k + 1; l < atomicActionSentenceWordCount[i][j]; l+=2) {  // For each item to be bought
+                                        int itemCount = atoi(bigSentencesActionPart[i][j][l]);
+                                        char *itemName = bigSentencesActionPart[i][j][l + 1];
+
+                                        // Increment items of buyers
+                                        for(int m = 0; m < k; m+=2) {  // For each buyer
+                                            char *buyerName = bigSentencesActionPart[i][j][m];
+
+                                            // Iterate people array to find buyer structs
+                                            int buyerFound = false;
+                                            int indexOfBuyer = -1;
+                                            for(int n = 0; n < peopleCount; n++) {  // Find the index of buyer if he exists
+                                                if(strcmp(people[n]->name, buyerName) == 0) {
+                                                    buyerFound = true;
+                                                    indexOfBuyer = n;
+                                                    break;
+                                                }
+                                            }
+
+                                            if(buyerFound == false) {  // If buyer person does not exist, create it
+                                                struct Person *person = (struct Person *)malloc(sizeof(struct Person));
+                                                person->itemCount = 0;
+                                                person->itemMaxCount = 1;
+                                                person->itemNames = (char **)malloc((person->itemMaxCount) * sizeof(char *));
+                                                person->itemNumbers = (int *)malloc((person->itemMaxCount) * sizeof(int));
+                                                person->name = buyerName;
+                                                person->location = "NOWHERE";
+
+                                                // Add person instance to the people array
+                                                addPerson(&peopleCount, &people, person, &peopleMaxCount);
+
+                                                indexOfBuyer = peopleCount - 1;
+                                            }
+
+                                            // Add this item "itemCount" many times
+                                            for(int p = 0; p < itemCount; p++) {
+                                                addItem(&(people[indexOfBuyer]->itemCount), &(people[indexOfBuyer]->itemNames), itemName, &(people[indexOfBuyer]->itemMaxCount), &(people[indexOfBuyer]->itemNumbers));
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            else if(strcmp(bigSentencesActionPart[i][j][k], "sell") == 0) {
+                                if(strcmp(bigSentencesActionPart[i][j][atomicActionSentenceWordCount[i][j] - 2], "to") == 0) {  // sell ... to
+                                    int sellerCount = (k + 1) / 2;
+                                    char *buyerName = bigSentencesActionPart[i][j][atomicActionSentenceWordCount[i][j] - 1];
+
+                                    // Check if the sellers exist and have enough items for the buyer
+                                    for(int x = 0; x < k; x+=2) {  // Iterate sellers in the atomic action sentence
+                                        for(int l = k + 1; l < atomicActionSentenceWordCount[i][j] - 2; l+=2) {  // For each item to be bought from the seller
+                                            int itemCount = atoi(bigSentencesActionPart[i][j][l]);
+                                            char *itemName = bigSentencesActionPart[i][j][l + 1];
+
+                                            // Traverse people array to find the seller
+                                            int sellerFound = false;
+                                            for(int m = 0; m < peopleCount; m++) {
+                                                if(strcmp(people[m]->name, bigSentencesActionPart[i][j][x]) == 0) {  // Seller exists
+                                                    sellerFound = true;
+
+                                                    // Traverse items of the seller to find the item we are looking for
+                                                    int itemFound = false;
+                                                    for(int n = 0; n < people[m]->itemCount; n++) {
+                                                        if(strcmp(people[m]->itemNames[n], itemName) == 0) {
+                                                            itemFound = true;
+
+                                                            if(itemCount > people[m]->itemNumbers[n]) {  // If seller does not have enough items
+                                                                breakCompletely3 = true;
+                                                                break;
+                                                            }
+                                                        }
+
+                                                        if(itemFound) {
+                                                            break;
+                                                        }
+                                                    }
+
+                                                    if(itemFound == false || breakCompletely3) {
+                                                        breakCompletely3 = true;
+                                                        break;
+                                                    }
+                                                }
+
+                                                if(sellerFound) {
+                                                    break;
+                                                }
+                                            }
+
+                                            if(sellerFound == false || breakCompletely3) {
+                                                breakCompletely3 = true;
+                                                break;
+                                            }
+                                        }
+
+                                        if(breakCompletely3) {
+                                            break;
+                                        }
+                                    }
+
+                                    if(breakCompletely3) {
+                                        break;
+                                    }
+
+                                    // Sellers exist and have enough items for the buyer
+                                    for(int l = k + 1; l < atomicActionSentenceWordCount[i][j]; l+=2) {  // For each item to be sought to the buyer
+                                        int itemCount = atoi(bigSentencesActionPart[i][j][l]);
+                                        char *itemName = bigSentencesActionPart[i][j][l + 1];
+
+                                        // Decrement from sellers
+                                        for(int x = 0; x < k; x+=2) {
+                                            char *sellerName = bigSentencesActionPart[i][j][x];
+
+                                            for(int m = 0; m < peopleCount; m++) {
+                                                if(strcmp(people[m]->name, sellerName) == 0) {
+                                                    for(int n = 0; n < people[m]->itemCount; n++) {
+                                                        if(strcmp(people[m]->itemNames[n], itemName) == 0) {
+                                                            people[m]->itemNumbers[n] -= itemCount;
+                                                            break;
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+
+                                        // Increment items of the buyer
+                                        int buyerFound = false;
+                                        int indexOfBuyer = -1;
+                                        for(int n = 0; n < peopleCount; n++) {  // Find the index of buyer if he exists
+                                            if(strcmp(people[n]->name, buyerName) == 0) {
+                                                buyerFound = true;
+                                                indexOfBuyer = n;
+                                                break;
+                                            }
+                                        }
+
+                                        if(buyerFound == false) {  // If buyer person does not exist, create it
+                                            struct Person *person = (struct Person *)malloc(sizeof(struct Person));
+                                            person->itemCount = 0;
+                                            person->itemMaxCount = 1;
+                                            person->itemNames = (char **)malloc((person->itemMaxCount) * sizeof(char *));
+                                            person->itemNumbers = (int *)malloc((person->itemMaxCount) * sizeof(int));
+                                            person->name = buyerName;
+                                            person->location = "NOWHERE";
+
+                                            // Add person instance to the people array
+                                            addPerson(&peopleCount, &people, person, &peopleMaxCount);
+
+                                            indexOfBuyer = peopleCount - 1;
+                                        }
+
+                                        // Add this item "itemCount" many times
+                                        for(int p = 0; p < itemCount * sellerCount; p++) {
+                                            addItem(&(people[indexOfBuyer]->itemCount), &(people[indexOfBuyer]->itemNames), itemName, &(people[indexOfBuyer]->itemMaxCount), &(people[indexOfBuyer]->itemNumbers));
+                                        }
+                                    }
+                                }
+                                else {  // sell
+                                    // Check if the sellers exist and have enough items for the buyer
+                                    for(int x = 0; x < k; x+=2) {  // Iterate sellers in the atomic action sentence
+                                        for(int l = k + 1; l < atomicActionSentenceWordCount[i][j] - 2; l+=2) {  // For each item to be sold
+                                            int itemCount = atoi(bigSentencesActionPart[i][j][l]);
+                                            char *itemName = bigSentencesActionPart[i][j][l + 1];
+
+                                            // Traverse people array to find the seller
+                                            int sellerFound = false;
+                                            for(int m = 0; m < peopleCount; m++) {
+                                                if(strcmp(people[m]->name, bigSentencesActionPart[i][j][x]) == 0) {  // Seller exists
+                                                    sellerFound = true;
+
+                                                    // Traverse items of the seller to find the item we are looking for
+                                                    int itemFound = false;
+                                                    for(int n = 0; n < people[m]->itemCount; n++) {
+                                                        if(strcmp(people[m]->itemNames[n], itemName) == 0) {
+                                                            itemFound = true;
+
+                                                            if(itemCount > people[m]->itemNumbers[n]) {  // If seller does not have enough items
+                                                                breakCompletely3 = true;
+                                                                break;
+                                                            }
+                                                        }
+
+                                                        if(itemFound) {
+                                                            break;
+                                                        }
+                                                    }
+
+                                                    if(itemFound == false || breakCompletely3) {
+                                                        breakCompletely3 = true;
+                                                        break;
+                                                    }
+                                                }
+
+                                                if(sellerFound) {
+                                                    break;
+                                                }
+                                            }
+
+                                            if(sellerFound == false || breakCompletely3) {
+                                                breakCompletely3 = true;
+                                                break;
+                                            }
+                                        }
+
+                                        if(breakCompletely3) {
+                                            break;
+                                        }
+                                    }
+
+                                    if(breakCompletely3) {
+                                        break;
+                                    }
+
+                                    // Sellers exist and have enough items to sell
+                                    for(int l = k + 1; l < atomicActionSentenceWordCount[i][j]; l+=2) {  // For each item to be sold
+                                        int itemCount = atoi(bigSentencesActionPart[i][j][l]);
+                                        char *itemName = bigSentencesActionPart[i][j][l + 1];
+
+                                        // Decrement from sellers
+                                        for(int x = 0; x < k; x+=2) {
+                                            char *sellerName = bigSentencesActionPart[i][j][x];
+
+                                            for(int m = 0; m < peopleCount; m++) {
+                                                if(strcmp(people[m]->name, sellerName) == 0) {
+                                                    for(int n = 0; n < people[m]->itemCount; n++) {
+                                                        if(strcmp(people[m]->itemNames[n], itemName) == 0) {
+                                                            people[m]->itemNumbers[n] -= itemCount;
+                                                            break;
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         free(words);
     }
+
+
+    free(people);
 
     return 0;
 }
