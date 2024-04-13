@@ -214,7 +214,7 @@ int main() {
                 }
 
                 if(subjectFound == false) {
-                    printf("INVALID\n");
+                    printf("NOWHERE\n");
                 }
                 continue;
             }
@@ -422,6 +422,11 @@ int main() {
                     continue;
                 }
 
+                if(j == wordCountInEachSentence[i] - 1) {
+                    validFormat = false;
+                    break;
+                }
+
                 // Action atomic sentence
                 if(strcmp(sentences[i][j], "go") == 0) {  // If the basic sentence consists of "go" action
                     atomicSentenceEndIndex = j + 2;
@@ -583,6 +588,11 @@ int main() {
                                 atomicSentenceEndIndex = k + 2;
                                 break;
                             }
+                        }
+
+                        if(k + 2 == wordCountInEachSentence[i] - 1) {
+                            atomicSentenceEndIndex = k + 2;
+                            break;
                         }
                     }
 
@@ -1064,7 +1074,7 @@ int main() {
                                     for(int l = 0; l < k; l+=2) {  // Traverse subjects in the atomic condition sentence
                                         char *name = bigSentencesConditionalPart[i][j][l];
                                         int personFound = false;
-                                        for(int m = k + 3; m < atomicConditionalSentenceWordCount[i][j]; m+=3) {  // Traverse items in the atomic condition sentence
+                                        for(int m = k + 1; m < atomicConditionalSentenceWordCount[i][j]; m+=3) {  // Traverse items in the atomic condition sentence
                                             char *itemName = bigSentencesConditionalPart[i][j][m + 1];
                                             char *itemCountChar = bigSentencesConditionalPart[i][j][m];
                                             int itemCount = atoi(itemCountChar);
