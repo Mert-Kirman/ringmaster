@@ -75,8 +75,6 @@ int main() {
             break;
         }
 
-        // NOT DECIDED: WHAT TO DO IN CASE OF BLANK LINE ?
-
         if(strcmp(line, "exit\n") == 0) {
             break;
         }
@@ -193,8 +191,8 @@ int main() {
                     }
                 }
 
-                if(subjectFound == false) {  // NOT DECIDED: Subject does not exist yet
-                    printf("INVALID\n");
+                if(subjectFound == false) {  // Subject does not exist yet
+                    printf("NOTHING\n");
                 }
                 continue;
             }
@@ -282,11 +280,9 @@ int main() {
 
             // Print total amount of items of the subjects
             int totalItemCount = 0;
-            int validPeople = 0;  // Keep track of the subjects that exist in our people array
             for(int i = 0; i < subjectCount; i++) {
                 for(int j = 0; j < peopleCount; j++) {
                     if(strcmp(people[j]->name, subjects[i]) == 0) {
-                        validPeople++;
                         for(int k = 0; k < people[j]->itemCount; k++) {
                             if(strcmp(people[j]->itemNames[k], words[totalIndex + 1]) == 0) {
                                 totalItemCount += people[j]->itemNumbers[k];
@@ -294,11 +290,6 @@ int main() {
                         }
                     }
                 }
-            }
-
-            if(validPeople != subjectCount) {  // There are subjects that do not exist in people array
-                printf("INVALID\n");
-                continue;
             }
 
             printf("%d\n", totalItemCount);
@@ -326,7 +317,7 @@ int main() {
 
             // Find the start of the next sentence after this if sentence
             int indexOfLastConditionWord;
-            int indexOfNextSentenceAction;  // Index of the action word in the beginning of the next sentence
+            int indexOfNextSentenceAction = -1;  // Index of the action word in the beginning of the next sentence
             for(int j = indexOfIf + 1; j < wordCount; j++) {
                 if(isConditionWord(words[j]) == true) {
                     indexOfLastConditionWord = j;
@@ -354,6 +345,9 @@ int main() {
                 startIndexOfCurrentSentence = startIndexOfNextSentence;
             }
             else if(strcmp(words[indexOfLastConditionWord], "has") == 0) {  // Case 4, 5, 6: If condition is "has", iterate until you come across a word without number preceding it
+                if(indexOfNextSentenceAction == -1) {  // There is no "basic" or "if" sentence succeeding this "if" sentence, this method will not work; treat this solo "if" sentence as a "basic" sentence
+                    break;
+                }
                 for(int j = indexOfNextSentenceAction - 2; j > indexOfLastConditionWord; j -= 2) {  // Iterate back until you don't come across "and"
                     if(strcmp(words[j], "and") == 0) {
                         startIndexOfNextSentence = j + 1;
@@ -580,7 +574,7 @@ int main() {
                     if((j + 2 < wordCountInEachSentence[i]) && (strcmp(sentences[i][j+2], "than") == 0)) {
                         j += 2;
                     }
-                    else if(j + 2 == wordCountInEachSentence[i] - 1) {  // If "has" is the last condition in a sentence, k + 3 will always give false
+                    if(j + 2 == wordCountInEachSentence[i] - 1) {  // If "has" is the last condition in a sentence, k + 3 will always give false
                         atomicSentenceEndIndex = j + 2;
                     }
                     for(int k = j; k < wordCountInEachSentence[i]; k+=3) {
@@ -632,6 +626,32 @@ int main() {
 
         if(validFormat == false) {  // If atomic sentences are not connected via "and", print "INVALID"
             printf("INVALID\n");
+
+            // Free allocated memory
+            for(int i = 0; i < sentencesCount; i++) {
+                free(sentences[i]);
+            }
+            free(sentences);
+
+            free(wordCountInEachSentence);
+            free(ifIndexArray);
+
+            for(int i = 0; i < bigSentencesActionPartCount; i++) {
+                for(int j = 0; j < atomicActionSentenceCount[i]; j++) {
+                    free(bigSentencesActionPart[i][j]);
+                }
+                free(bigSentencesActionPart[i]);
+            }
+            free(bigSentencesActionPart);
+
+            for(int i = 0; i < bigSentencesConditionalPartCount; i++) {
+                for(int j = 0; j < atomicConditionalSentenceCount[i]; j++) {
+                    free(bigSentencesConditionalPart[i][j]);
+                }
+                free(bigSentencesConditionalPart[i]);
+            }
+            free(bigSentencesConditionalPart);
+
             free(words);
             continue;
         }
@@ -936,7 +956,7 @@ int main() {
                 int breakCompletely2 = false;
                 int allConditionsTrue = true;
                 if(atomicConditionalSentenceCount[i] != 0) {  // There are conditions that need to be checked before processing actions
-                    for(int j = 0; j < atomicConditionalSentenceCount[j]; j++) {
+                    for(int j = 0; j < atomicConditionalSentenceCount[i]; j++) {
                         for(int k = 0; k < atomicConditionalSentenceWordCount[i][j]; k++) {
                             if(strcmp(bigSentencesConditionalPart[i][j][k], "at") == 0) {
                                 char *location = bigSentencesConditionalPart[i][j][k + 1];
@@ -1098,7 +1118,7 @@ int main() {
                 }
 
                 if(allConditionsTrue) {  // All conditions are met, proceed with actions
-                    for(int j = 0; j < atomicActionSentenceCount[j]; j++) {
+                    for(int j = 0; j < atomicActionSentenceCount[i]; j++) {
                         int breakCompletely3 = false;
                         for(int k = 0; k < atomicActionSentenceWordCount[i][j]; k++) {
                             if(strcmp(bigSentencesActionPart[i][j][k], "go") == 0) {
@@ -1345,7 +1365,7 @@ int main() {
                                     }
 
                                     // Sellers exist and have enough items for the buyer
-                                    for(int l = k + 1; l < atomicActionSentenceWordCount[i][j]; l+=3) {  // For each item to be sold to the buyer
+                                    for(int l = k + 1; l < atomicActionSentenceWordCount[i][j] - 2; l+=3) {  // For each item to be sold to the buyer
                                         int itemCount = atoi(bigSentencesActionPart[i][j][l]);
                                         char *itemName = (char *)malloc(strlen(bigSentencesActionPart[i][j][l + 1]) + 1);
                                         strcpy(itemName, bigSentencesActionPart[i][j][l + 1]);
@@ -1402,7 +1422,7 @@ int main() {
                                 else {  // sell
                                     // Check if the sellers exist and have enough items for the buyer
                                     for(int x = 0; x < k; x+=2) {  // Iterate sellers in the atomic action sentence
-                                        for(int l = k + 1; l < atomicActionSentenceWordCount[i][j] - 2; l+=3) {  // For each item to be sold
+                                        for(int l = k + 1; l < atomicActionSentenceWordCount[i][j]; l+=3) {  // For each item to be sold
                                             int itemCount = atoi(bigSentencesActionPart[i][j][l]);
                                             char *itemName = (char *)malloc(strlen(bigSentencesActionPart[i][j][l + 1]) + 1);
                                             strcpy(itemName, bigSentencesActionPart[i][j][l + 1]);
@@ -1486,6 +1506,31 @@ int main() {
                 }
             }
         }
+
+        // Free allocated memory
+        for(int i = 0; i < sentencesCount; i++) {
+            free(sentences[i]);
+        }
+        free(sentences);
+
+        free(wordCountInEachSentence);
+        free(ifIndexArray);
+
+        for(int i = 0; i < bigSentencesActionPartCount; i++) {
+            for(int j = 0; j < atomicActionSentenceCount[i]; j++) {
+                free(bigSentencesActionPart[i][j]);
+            }
+            free(bigSentencesActionPart[i]);
+        }
+        free(bigSentencesActionPart);
+
+        for(int i = 0; i < bigSentencesConditionalPartCount; i++) {
+            for(int j = 0; j < atomicConditionalSentenceCount[i]; j++) {
+                free(bigSentencesConditionalPart[i][j]);
+            }
+            free(bigSentencesConditionalPart[i]);
+        }
+        free(bigSentencesConditionalPart);
 
         free(words);
     }
