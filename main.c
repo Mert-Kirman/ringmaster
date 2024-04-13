@@ -270,7 +270,7 @@ int main() {
                     break;
                 }
 
-                subjects[i] = words[i];
+                subjects[subjectCount] = words[i];
                 subjectCount++;
             }
 
@@ -951,7 +951,6 @@ int main() {
             printf("INVALID\n");
         }
         else {
-            printf("OK\n");
             for(int i = 0; i < sentencesCount; i++) {
                 int breakCompletely2 = false;
                 int allConditionsTrue = true;
@@ -1158,6 +1157,19 @@ int main() {
 
                                     int indexOfSeller = -1;  // Index of the seller in our people array
 
+                                    // Check if a subject is both buyer and seller, if so print INVALID
+                                    for(int l = 0; l < k; l+=2) {  // Traverse subjects
+                                        if(strcmp(bigSentencesActionPart[i][j][l], seller) == 0) {
+                                            printf("INVALID\n");
+                                            breakCompletely = true;
+                                            break;
+                                        }
+                                    }
+
+                                    if(breakCompletely) {
+                                        break;
+                                    }
+
                                     // Check if the seller exists and has enough items for all buyers
                                     for(int l = k + 1; l < atomicActionSentenceWordCount[i][j] - 2; l+=3) {  // For each item to be bought from the seller
                                         int itemCount = atoi(bigSentencesActionPart[i][j][l]);
@@ -1307,6 +1319,19 @@ int main() {
                                     int sellerCount = (k + 1) / 2;
                                     char *buyerName = (char *)malloc(strlen(bigSentencesActionPart[i][j][atomicActionSentenceWordCount[i][j] - 1]) + 1);
                                     strcpy(buyerName, bigSentencesActionPart[i][j][atomicActionSentenceWordCount[i][j] - 1]);
+
+                                    // Check if a subject is both buyer and seller, if so print INVALID
+                                    for(int l = 0; l < k; l+=2) {  // Traverse sellers
+                                        if(strcmp(bigSentencesActionPart[i][j][l], buyerName) == 0) {
+                                            printf("INVALID\n");
+                                            breakCompletely = true;
+                                            break;
+                                        }
+                                    }
+
+                                    if(breakCompletely) {
+                                        break;
+                                    }
 
                                     // Check if the sellers exist and have enough items for the buyer
                                     for(int x = 0; x < k; x+=2) {  // Iterate sellers in the atomic action sentence
@@ -1502,8 +1527,20 @@ int main() {
                                 }
                             }
                         }
+
+                        if(breakCompletely) {
+                            break;
+                        }
+                    }
+
+                    if(breakCompletely) {
+                        break;
                     }
                 }
+            }
+
+            if(breakCompletely == false) {
+                printf("OK\n");
             }
         }
 
