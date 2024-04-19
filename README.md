@@ -198,7 +198,7 @@ make
 ```
 This command will execute the following line from the Makefile:
 ```console
-gcc -o ringmaster ./ringmaster.c
+gcc -o ringmaster ./main.c
 ```
 
 

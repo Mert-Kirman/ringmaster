@@ -1,2 +1,2 @@
 default:
-	gcc -o ringmaster ./ringmaster.c
+	gcc -o ringmaster ./main.c
