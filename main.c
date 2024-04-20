@@ -1029,7 +1029,7 @@ int main() {
                                         }
                                     }
                                 }
-                                else if(strcmp(bigSentencesConditionalPart[i][j][k], "more") == 0) {
+                                else if(strcmp(bigSentencesConditionalPart[i][j][k + 1], "more") == 0) {
                                     for(int l = 0; l < k; l+=2) {  // Traverse subjects in the atomic condition sentence
                                         char *name = bigSentencesConditionalPart[i][j][l];
                                         int personFound = false;
