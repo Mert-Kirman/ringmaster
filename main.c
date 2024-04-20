@@ -169,22 +169,26 @@ int main() {
                 for(int i = 0; i < peopleCount; i++) {
                     if(strcmp(people[i]->name, subjectName) == 0) {  // Subject found
                         subjectFound = true;
-                        int hasItem = false;
                         int itemCount = people[i]->itemCount;
                         // Print the items of the subject with their counts
-                        for(int j = 0; j < itemCount - 1; j++) {
+                        int nonzeroItemCount = 0;
+                        for(int j = 0; j < itemCount; j++) {
                             if(people[i]->itemNumbers[j] > 0) {
-                                hasItem = true;
+                                nonzeroItemCount++;
+                            }
+                        }
+
+                        for(int j = 0; j < itemCount; j++) {
+                            if((nonzeroItemCount == 1 || j == itemCount - 1) && people[i]->itemNumbers[j] > 0) {
+                                printf("%d %s\n", people[i]->itemNumbers[j], people[i]->itemNames[j]);
+                                break;
+                            }
+                            else if(people[i]->itemNumbers[j] > 0) {
                                 printf("%d %s and ", people[i]->itemNumbers[j], people[i]->itemNames[j]);
                             }
                         }
 
-                        if(people[i]->itemNumbers[itemCount - 1] > 0) {
-                            hasItem = true;
-                            printf("%d %s\n", people[i]->itemNumbers[itemCount - 1], people[i]->itemNames[itemCount - 1]);
-                        }
-
-                        if(hasItem == false) {  // Subject does not have any items
+                        if(nonzeroItemCount == 0) {  // Subject does not have any items
                             printf("NOTHING\n");
                         }
                         break;
